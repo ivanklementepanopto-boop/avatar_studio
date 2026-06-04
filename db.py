@@ -55,20 +55,20 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 class Role(str, enum.Enum):
     viewer = "viewer"
     developer = "developer"
-    creator = "creator"      # avatar maker — full access to production tools
-    support = "support"      # client onboarding manager
-    manager = "manager"      # high-level stats observer (custom avatars/voices)
+    creator = "creator"            # Оставляем для обратной совместимости со старой БД
+    avatar_manager = "avatar_manager"  # Новая роль: Аватара менеджер
+    support = "support"            # Саппорт менеджер
+    manager = "manager"            # Просто менеджер (просмотр статистики)
     superadmin = "superadmin"
 
 
-# Privilege ordering. `creator`, `support`, `manager` and `developer` all sit at
-# the same effective tier (each has its own scope of pages); `viewer` is below
-# and `superadmin` is above all.
+# Настройка уровней доступа (Иерархия прав)
 ROLE_LEVEL = {
     Role.viewer:     1,
     Role.developer:  2,
     Role.support:    2,
     Role.creator:    2,
+    Role.avatar_manager: 2,
     Role.manager:    2,
     Role.superadmin: 3,
 }

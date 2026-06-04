@@ -564,10 +564,13 @@ async def admin_update_role(
     db: Session = Depends(get_session),
 ):
     """Change a user's role. SuperAdmins cannot demote themselves."""
-    try:
+   try:
         new_role = Role(body.role)
     except ValueError:
-        raise HTTPException(400, f"Invalid role '{body.role}'. Use viewer/developer/creator/support/manager/superadmin.")
+        raise HTTPException(
+            400,
+            f"Invalid role '{body.role}'. Use viewer/developer/avatar_manager/support/manager/superadmin."
+        )
 
     target = get_user_by_id(db, user_id)
     if target is None:
@@ -5652,12 +5655,12 @@ ONBOARDING_ALLOWED_EXT    = {
 }
 
 ROLE_SUPPORT    = "support"
-ROLE_CREATOR    = "creator"
+ROLE_AVATAR_MAN = "avatar_manager"
+ROLE_CREATOR    = "creator"  # для совместимости
 ROLE_SUPERADMIN = "superadmin"
 
-# Audiences that can *manage* onboarding from the inside (support panel,
-# bell notifications). Listed here so we don't sprinkle role strings.
-ONBOARDING_AUDIENCE = {ROLE_SUPPORT, ROLE_CREATOR, ROLE_SUPERADMIN}
+# Расширяем список тех, кто имеет доступ к менеджменту онбординга
+ONBOARDING_AUDIENCE = {ROLE_SUPPORT, ROLE_AVATAR_MAN, ROLE_CREATOR, ROLE_SUPERADMIN}
 
 
 def _onboarding_can_manage(user: User) -> bool:

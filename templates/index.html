@@ -27,21 +27,13 @@
             <i class="fa-solid fa-chevron-down"></i>
         </div>
 
-        {# ── Role-scoped sidebar ───────────────────────────────────────────
-           Each role sees only the pages relevant to its job:
-             • support    → Client Onboarding (only)
-             • manager    → Stats overview (only)
-             • creator    → full production toolkit
-             • developer  → same as creator
-             • superadmin → everything
-             • viewer     → produce + pre-production (read-only)
-        #}
-        {% set is_creator    = user.role in ['creator', 'developer', 'superadmin'] %}
-        {% set is_support    = user.role in ['support',  'superadmin'] %}
-        {% set is_manager    = user.role in ['manager',  'superadmin'] %}
-        {% set is_viewer_lvl = user.role in ['viewer',   'developer', 'creator', 'superadmin'] %}
+        {# ── Ролевые доступы для кастомизации кабинетов ── #}
+        {% set is_avatar_manager = user.role in ['avatar_manager', 'creator', 'developer', 'superadmin'] %}
+        {% set is_support        = user.role in ['support',  'superadmin'] %}
+        {% set is_manager        = user.role in ['manager',  'superadmin'] %}
+        {% set is_viewer_lvl     = user.role in ['viewer', 'developer', 'avatar_manager', 'creator', 'superadmin'] %}
 
-        {% if is_creator or is_viewer_lvl %}
+        {% if is_avatar_manager or is_viewer_lvl %}
         <div class="sidebar-section">
             <div class="sidebar-section-head">
                 <i class="fa-solid fa-compass sidebar-section-icon"></i>
@@ -56,7 +48,7 @@
         </div>
         {% endif %}
 
-        {% if is_creator %}
+        {% if is_avatar_manager %}
         <div class="sidebar-section">
             <div class="sidebar-section-head">
                 <i class="fa-solid fa-wand-magic-sparkles sidebar-section-icon"></i>
@@ -81,21 +73,21 @@
         </div>
         {% endif %}
 
-        {% if is_creator or is_support %}
+        {% if is_avatar_manager or is_support %}
         <div class="sidebar-section">
             <div class="sidebar-section-head">
                 <i class="fa-solid fa-circle-check sidebar-section-icon"></i>
                 <span class="sidebar-section-title">Pre-production</span>
             </div>
             <nav class="sidebar-nav">
-                {% if is_support or is_creator %}
+                {% if is_support or is_avatar_manager %}
                 <a data-tab="onboarding" data-tooltip="Client onboarding — generate upload links and start production">
                     <i class="fa-solid fa-handshake"></i>
                     <span>Client Onboarding</span>
                     <span class="nav-meta">New</span>
                 </a>
                 {% endif %}
-                {% if is_creator %}
+                {% if is_avatar_manager %}
                 <a data-tab="my-jira" data-tooltip="My Tasks — your personal Jira queue">
                     <i class="fa-solid fa-user-check"></i>
                     <span>My Tasks</span>
@@ -121,7 +113,7 @@
         </div>
         {% endif %}
 
-        {% if is_creator %}
+        {% if is_avatar_manager %}
         <div class="sidebar-section">
             <div class="sidebar-section-head">
                 <i class="fa-solid fa-sliders sidebar-section-icon"></i>
@@ -191,7 +183,7 @@
                 <span class="role-pill role-{{ user.role }}">
                     {% if user.role == 'superadmin' %}<i class="fa-solid fa-crown"></i>
                     {% elif user.role == 'developer' %}<i class="fa-solid fa-code"></i>
-                    {% elif user.role == 'creator' %}<i class="fa-solid fa-wand-magic-sparkles"></i>
+                  {% elif user.role == 'avatar_manager' or user.role == 'creator' %}<i class="fa-solid fa-wand-magic-sparkles"></i>
                     {% elif user.role == 'support' %}<i class="fa-solid fa-handshake"></i>
                     {% elif user.role == 'manager' %}<i class="fa-solid fa-chart-line"></i>
                     {% else %}<i class="fa-solid fa-eye"></i>{% endif %}
@@ -3793,14 +3785,15 @@ loadChatTopics();
 /* ════════════════════════════════════════════════════════════════════════
    USERS & ROLES (SuperAdmin only)
    ════════════════════════════════════════════════════════════════════════ */
-const ROLES = ['viewer', 'developer', 'creator', 'support', 'manager', 'superadmin'];
+const ROLES = ['viewer', 'developer', 'avatar_manager', 'support', 'manager', 'superadmin'];
 const ROLE_ICON = {
-    viewer:     '<i class="fa-solid fa-eye"></i>',
-    developer:  '<i class="fa-solid fa-code"></i>',
-    creator:    '<i class="fa-solid fa-wand-magic-sparkles"></i>',
-    support:    '<i class="fa-solid fa-handshake"></i>',
-    manager:    '<i class="fa-solid fa-chart-line"></i>',
-    superadmin: '<i class="fa-solid fa-crown"></i>',
+    viewer:         '<i class="fa-solid fa-eye"></i>',
+    developer:      '<i class="fa-solid fa-code"></i>',
+    avatar_manager: '<i class="fa-solid fa-wand-magic-sparkles"></i>',
+    creator:        '<i class="fa-solid fa-wand-magic-sparkles"></i>', // fallback
+    support:        '<i class="fa-solid fa-handshake"></i>',
+    manager:        '<i class="fa-solid fa-chart-line"></i>',
+    superadmin:     '<i class="fa-solid fa-crown"></i>',
 };
 const PROVIDER_ICON = {
     password: '<i class="fa-solid fa-key"></i>',
