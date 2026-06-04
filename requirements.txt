@@ -1,0 +1,28 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+jinja2>=3.1
+python-multipart>=0.0.9
+python-dotenv>=1.0
+httpx>=0.27
+requests>=2.31
+pydantic>=2.0
+cleanvoice-sdk>=0.1.0
+numpy>=1.26
+boto3>=1.34
+
+# Auth / users
+sqlalchemy>=2.0
+bcrypt>=4.0
+itsdangerous>=2.2
+authlib>=1.3
+# Optional: PostgreSQL driver — uncomment for production
+# psycopg2-binary>=2.9
+
+# Google Drive (client onboarding pipeline) — optional. Without these the
+# /api/onboarding endpoints fall back to local-disk simulation mode.
+google-api-python-client>=2.0
+google-auth>=2.0
+google-auth-oauthlib>=1.0
+
+# QR generator for the mobile-handoff link on the client setup page.
+qrcode>=8.0

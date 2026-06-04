@@ -1,0 +1,98 @@
+{
+  "version": "V4",
+  "artifacts": [
+    {
+      "Artifacts": "No teeth",
+      "Link": "https://dev.elai.io/v/69f9c3bc4499f242445a9431",
+      "Description": "Person without teeth on generated video",
+      "Why?": "You trained avatar with silent video",
+      "Solutions": "Need to retrain with original footage that contains talking on the camera",
+      "Action / Config update": "Retrain avatar",
+      "Person-to-refer": "-",
+      "Risk": "Low"
+    },
+    {
+      "Artifacts": "Blurry / stretching teeth",
+      "Link": "https://dev.elai.io/v/69f9c3bc4499f242445a9431",
+      "Description": "Low-resolution teeth in contrast to the other face region; unstable non-rigid teeth",
+      "Why?": "Original footage doesn't have enough visible teeth and probably containts unexpressive speech",
+      "Solutions": "1. Try to decrease amount of mouth amplitude in config\n2. Improve lipsync (check if the latest model configuration, etc)",
+      "Action / Config update": "1. Setup \"jaw_correction\": {\n              \"mode\": \"max_pitch_scale\",\n\"pitch_multiplier\": 0.9, \n},\nYou can vary quantile value: 0.85, 0.8, 0.9, 0.95",
+      "Person-to-refer": "Vadym, Oleksii, Evgeniia",
+      "Risk": "Low"
+    },
+    {
+      "Artifacts": "Unnatural blinking",
+      "Link": "https://app.elai.io/v/69cfc852d956db5afb9d1d15",
+      "Description": "Visible non-natural eyelids movements",
+      "Why?": "There could be different reasons. \n1. Low original video FPS (need to be higher or equal than 25)\n2. Low amount of blinking on original footage\n3. Glasses could decrease eyes blinking quality",
+      "Solutions": "1. Decrease amount of blinking in config\n2. Setup original blinking instead of synthetic",
+      "Action / Config update": "1. Try add this options in the \"blinking\" config\n\"blink_interval_frame\": 70.0, \n\"blink_interval_std_frames\": 20.0,\n2. Setup \"mode\": \"original\" in blinking config",
+      "Person-to-refer": "Vadym, Oleksii, Evgeniia",
+      "Risk": "Low"
+    },
+    {
+      "Artifacts": "Sleepy avatar / asymmetric eyes",
+      "Link": "https://app.elai.io/v/69cfc852d956db5afb9d1d15",
+      "Description": "Avatar with asymmetric eyes and looks like he / she want to sleep",
+      "Why?": "The V4 technology sometimes fails to confidently reconstruct person's blinking symmetrically. We accounted for it in our code, but sometimes we need to manually setup some values",
+      "Solutions": "1. Tune minimal blinking parameter\n2. Make blinking more symmetrical using options in config",
+      "Action / Config update": "1. Vary \"blink_min\": 0.1 parameter. You can check -0.05, 0.0, 0.05, 0.1, 0.15, 0.2. If avatar has more closed eyes, you need to decrease parameter. If avatar has more opened eyes, you need to increase parameter. \n2. Force symmetrical blinking using advanced technique. \nYou need to setup blink_min to quantile mode and setup quantile\n\"blink_min\": \"quantile\",\n\"blink_quantile\": 0.2\nYou can vary quantile value: 0.05, 0.15, 0.1, 0.2, 0.25",
+      "Person-to-refer": "Vadym, Oleksii, Evgeniia",
+      "Risk": "Medium"
+    },
+    {
+      "Artifacts": "Weird eyebrows movements",
+      "Link": "https://eu.elai.io/v/69fc6ae4c5738dfbe3e102d7",
+      "Description": "Random eyebrows movements that aren't correlated with speech",
+      "Why?": "The V4 technology sometimes couple head movement with specific eyebrows movement",
+      "Solutions": "Improve lipsync via fix for eyebrows",
+      "Action / Config update": "Request check from responsible and config update",
+      "Person-to-refer": "Pavel",
+      "Risk": "Medium"
+    },
+    {
+      "Artifacts": "Unnatural lipsync",
+      "Link": "https://dev.elai.io/v/69f9c6694c4761773dc6b8c9",
+      "Description": "Visually non-expressive lipsync",
+      "Why?": "Original footage doesn't contain good expressive lipsync as we stated in our avatar requirements",
+      "Solutions": "Improve lipsync (check the latest config)",
+      "Action / Config update": "Request check from responsible and config update",
+      "Person-to-refer": "Pavel",
+      "Risk": "Medium"
+    },
+    {
+      "Artifacts": "Face floating / jittering",
+      "Link": "https://app.elai.io/preview/69f204e96c62bdcae0a30f2d",
+      "Description": "Visible face non-stability and movements",
+      "Why?": "Usage of Mediapipe Facemesh detector leads to the unstability for some persons (asiats, etc)",
+      "Solutions": "Retrain avatar with specific configuration (refer to ML). It will decrease problem, but not fully solve it.",
+      "Action / Config update": "During training preparation setup\nNORMALIZATION_TYPE = \"centered\"",
+      "Person-to-refer": "Vadym, Oleksii, Evgeniia",
+      "Risk": "High"
+    }
+  ],
+  "improvements": [
+    {
+      "Artifact / Problem": "Long training (14 hours)",
+      "Solution / Project": "Apply Oleksii's V4 fine-tuning (14 hours -> 7 hours). It is ready, but currently untested for custom avatars",
+      "Comment": "It might give worse quality than training from scratch. Need to test together with Avatar Makers",
+      "Risk": "Low",
+      "Resources": "1 person, 1 sprint"
+    },
+    {
+      "Artifact / Problem": "Face floating",
+      "Solution / Project": "FLAME Reconstruction PoC + Fast lipsync retraining + Integration into V4",
+      "Comment": "Find and test another FLAME reconstruction method, create new internal reconstructor method, retrain lipsync model on new reconstructions, integrate in the V4. Must be more simple than NPHM as we don't need to research new domain. This method have medium risk, but medium probability of problem resolution because it is linear method",
+      "Risk": "Medium",
+      "Resources": "1. 1-2 sprints research to create PoC, 1 person\n2. If 1 step is successfull, need to train lipsync model on new expressions / vertices\n3. If 1 and 2 are successfull, integrate new reconstruction model and lipsync in V4\n\nProbably it takes 1-2 months and requires 1 person for V4 pipeline ownership and reconstructor development + 1 person for lipsync development and training (Pavel)"
+    },
+    {
+      "Artifact / Problem": "Face floating",
+      "Solution / Project": "NPHM PoC + Lipsync training + Integration into V4",
+      "Comment": "The core reason is Mediapipe Facemesh inaccuracy during FLAME reconstruction. Our technology rely on it very heavily, so in order to make improvements, we need to apply another technology. The most prominent it is Neural Head Parametric Models (NPHM). The solution requires research PoC, then train. This method have high risk, but higher probability of problem resolution because it is non-linear method",
+      "Risk": "High",
+      "Resources": "1. 2-3 sprints research to create PoC, 1 person\n2. If 1 step is successfull, need to train lipsync model on new representation\n3. If 1 and 2 steps are succsesfull, integrate new reconstruction model and lipsync in the V4\n\nProbably it takes 2-3 month and requires 1 persons for V4 pipeline ownership and reconstructor development + 1 person for lipsync development and training (Pavel)"
+    }
+  ]
+}

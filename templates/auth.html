@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Avatar Studio — {% if reset_mode %}Reset password{% else %}Sign in{% endif %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="auth-body">
+    <!-- Decorative background -->
+    <div class="auth-bg" aria-hidden="true">
+        <div class="auth-bg-orb auth-bg-orb-1"></div>
+        <div class="auth-bg-orb auth-bg-orb-2"></div>
+        <div class="auth-bg-grid"></div>
+    </div>
+
+    <div class="auth-shell">
+        <!-- LEFT: marketing / context -->
+        <aside class="auth-side">
+            <div class="auth-brand-big">
+                <div class="brand-mark-big">AS</div>
+                <div class="brand-meta">
+                    <div class="brand-name">Avatar Studio</div>
+                    <div class="brand-tag">unified creator workspace</div>
+                </div>
+            </div>
+            <h2 class="auth-side-title">Build, train, and ship<br>talking-head avatars.</h2>
+            <ul class="auth-features">
+                <li><i class="fa-solid fa-rocket"></i><div><b>Deploy</b><span>Push trained configs to Elai prod</span></div></li>
+                <li><i class="fa-solid fa-microchip"></i><div><b>Train</b><span>Launch SageMaker GPU jobs</span></div></li>
+                <li><i class="fa-solid fa-microphone-lines"></i><div><b>Clone</b><span>Voice cloning via ElevenLabs</span></div></li>
+                <li><i class="fa-solid fa-arrow-up-right-dots"></i><div><b>Enhance</b><span>GFPGAN face restoration</span></div></li>
+                <li><i class="fa-solid fa-screwdriver-wrench"></i><div><b>Tune</b><span>Post-training footage tweaks</span></div></li>
+            </ul>
+            <div class="auth-side-foot">
+                <i class="fa-solid fa-shield-halved"></i>
+                Role-based access · audit logs · OAuth
+            </div>
+        </aside>
+
+        <!-- RIGHT: auth card -->
+        <main class="auth-card">
+            <div class="auth-brand-mobile">
+                <div class="brand-mark">AS</div>
+                <span>Avatar Studio</span>
+            </div>
+
+            {% if reset_mode %}
+                {# ───────────────── RESET PASSWORD MODE ───────────────── #}
+                {% if reset_user_email %}
+                    <h1 class="auth-title">Set a new password</h1>
+                    <p class="auth-sub">Setting a new password for <b>{{ reset_user_email }}</b>. The link is valid for 60 minutes and can be used once.</p>
+                    <form id="resetForm" class="auth-form">
+                        <input type="hidden" name="token" value="{{ reset_token }}">
+                        <div class="form-row" style="margin: 0;">
+                            <label>New password</label>
+                            <div class="input-wrap">
+                                <input type="password" id="newPassword" name="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8">
+                                <button type="button" class="input-eye" data-target="newPassword" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                            </div>
+                            <div class="pw-strength" id="pwStrength" aria-hidden="true">
+                                <span></span><span></span><span></span><span></span>
+                            </div>
+                            <div class="hint" id="pwHint">Use 8+ characters with a mix of letters, numbers, and symbols.</div>
+                        </div>
+                        <div class="form-row" style="margin: 0;">
+                            <label>Confirm new password</label>
+                            <div class="input-wrap">
+                                <input type="password" id="confirmPassword" autocomplete="new-password" placeholder="Repeat the new password" required>
+                                <button type="button" class="input-eye" data-target="confirmPassword" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                            </div>
+                            <div class="hint" id="matchHint"></div>
+                        </div>
+                        <button type="submit" id="submitBtn" class="btn btn-p btn-full btn-tall">
+                            <i class="fa-solid fa-key"></i> Update password &amp; sign in
+                        </button>
+                    </form>
+                    <div id="messageBox" class="message-box"></div>
+                {% else %}
+                    <div class="reset-error-state">
+                        <div class="reset-error-icon"><i class="fa-solid fa-link-slash"></i></div>
+                        <h2>{% if reset_error == 'expired' %}Link expired{% elif reset_error == 'used' %}Link already used{% else %}Invalid reset link{% endif %}</h2>
+                        <p>
+                            {% if reset_error == 'expired' %}
+                                Reset links are valid for 60 minutes. Request a new one to continue.
+                            {% elif reset_error == 'used' %}
+                                This link has already been used once. Request a fresh link if you need to set a new password again.
+                            {% else %}
+                                This link is malformed or unknown. Make sure you opened the most recent one.
+                            {% endif %}
+                        </p>
+                        <a href="/auth?mode=forgot" class="btn btn-p btn-full btn-tall">
+                            <i class="fa-solid fa-rotate"></i> Request a new link
+                        </a>
+                    </div>
+                {% endif %}
+            {% else %}
+                {# ───────────────── SIGN IN / SIGN UP / FORGOT ───────────────── #}
+                <h1 id="authTitle" class="auth-title">Sign in to Studio</h1>
+                <p id="authSubtitle" class="auth-sub">
+                    Welcome back. Sign in to continue training, cloning, and tuning your avatars.
+                </p>
+
+                {% if oauth.google or oauth.github %}
+                <div class="oauth-row" id="oauthRow">
+                    {% if oauth.google %}
+                    <a href="/auth/oauth/google" class="oauth-btn oauth-google">
+                        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                            <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+                            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+                        </svg>
+                        <span>Continue with Google</span>
+                    </a>
+                    {% endif %}
+                    {% if oauth.github %}
+                    <a href="/auth/oauth/github" class="oauth-btn oauth-github">
+                        <i class="fa-brands fa-github"></i>
+                        <span>Continue with GitHub</span>
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="oauth-divider" id="oauthDivider"><span>or use email</span></div>
+                {% endif %}
+
+                <form id="authForm" class="auth-form">
+                    <div class="form-row" style="margin: 0;">
+                        <label>Email</label>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-envelope input-prefix"></i>
+                            <input type="email" id="username" name="username" autocomplete="username" placeholder="you@studio.com" required>
+                        </div>
+                    </div>
+                    <div class="form-row" id="passwordRow" style="margin: 0;">
+                        <div class="label-row">
+                            <label>Password</label>
+                            <button type="button" id="forgotLink" class="link-btn link-btn-strong">Forgot?</button>
+                        </div>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-lock input-prefix"></i>
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="At least 8 characters" required>
+                            <button type="button" class="input-eye" data-target="password" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn btn-p btn-full btn-tall">
+                        Sign in
+                    </button>
+                </form>
+
+                <div id="messageBox" class="message-box"></div>
+                <div id="resetLinkBox" class="reset-link-box" hidden>
+                    <div class="rlb-head"><i class="fa-solid fa-link"></i> Reset link generated</div>
+                    <div class="rlb-meta">Valid for <b>60 minutes</b> · single-use</div>
+                    <div class="rlb-row">
+                        <input type="text" id="resetLinkInput" readonly>
+                        <button type="button" id="copyResetLink" class="btn btn-ghost">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <a href="#" id="openResetLink" class="rlb-open">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Open link
+                    </a>
+                </div>
+
+                <div class="auth-toggle">
+                    <span id="toggleHint">Don't have an account? </span>
+                    <button id="toggleModeBtn" type="button">Create one</button>
+                </div>
+
+                <p class="auth-footnote">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>The first account ever registered becomes the workspace <b>SuperAdmin</b>. Additional accounts join as <b>Viewers</b> until promoted.</span>
+                </p>
+            {% endif %}
+        </main>
+    </div>
+
+    <script>
+    {% if reset_mode and reset_user_email %}
+        /* ──── Password reset confirmation ──── */
+        const resetForm = document.getElementById('resetForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageBox = document.getElementById('messageBox');
+        const newPw = document.getElementById('newPassword');
+        const confirmPw = document.getElementById('confirmPassword');
+        const pwStrength = document.getElementById('pwStrength');
+        const pwHint = document.getElementById('pwHint');
+        const matchHint = document.getElementById('matchHint');
+
+        function scorePw(pw) {
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+            if (/\d/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            return Math.min(score, 4);
+        }
+        const STRENGTH_LABEL = ['Too short', 'Weak', 'Fair', 'Good', 'Strong'];
+        const STRENGTH_CLASS = ['s0', 's1', 's2', 's3', 's4'];
+
+        newPw.addEventListener('input', () => {
+            const s = scorePw(newPw.value);
+            pwStrength.className = 'pw-strength ' + STRENGTH_CLASS[s];
+            pwHint.textContent = newPw.value
+                ? STRENGTH_LABEL[s] + (s >= 3 ? ' password' : ' — add length, digits, or symbols')
+                : 'Use 8+ characters with a mix of letters, numbers, and symbols.';
+            checkMatch();
+        });
+        confirmPw.addEventListener('input', checkMatch);
+        function checkMatch() {
+            if (!confirmPw.value) { matchHint.textContent = ''; matchHint.className = 'hint'; return; }
+            if (confirmPw.value === newPw.value) {
+                matchHint.innerHTML = '<i class="fa-solid fa-circle-check"></i> Passwords match';
+                matchHint.className = 'hint ok';
+            } else {
+                matchHint.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Passwords don\'t match';
+                matchHint.className = 'hint err';
+            }
+        }
+
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageBox.className = 'message-box';
+            if (newPw.value !== confirmPw.value) {
+                messageBox.className = 'message-box show err';
+                messageBox.textContent = "Passwords don't match";
+                return;
+            }
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating…';
+            try {
+                const fd = new FormData(resetForm);
+                const r = await fetch('/api/password-reset/confirm', { method: 'POST', body: fd });
+                const d = await r.json();
+                if (!r.ok) throw new Error(d.message || 'Could not update password');
+                messageBox.className = 'message-box show ok';
+                messageBox.textContent = d.message;
+                setTimeout(() => window.location.replace('/'), 600);
+            } catch (err) {
+                messageBox.className = 'message-box show err';
+                messageBox.textContent = err.message;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-key"></i> Update password &amp; sign in';
+            }
+        });
+
+    {% elif not reset_mode %}
+        /* ──── Sign in / Sign up / Forgot ──── */
+        const MODE = { SIGNIN: 'signin', SIGNUP: 'signup', FORGOT: 'forgot' };
+        let mode = MODE.SIGNIN;
+
+        const form = document.getElementById('authForm');
+        const title = document.getElementById('authTitle');
+        const subtitle = document.getElementById('authSubtitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleBtn = document.getElementById('toggleModeBtn');
+        const toggleHint = document.getElementById('toggleHint');
+        const messageBox = document.getElementById('messageBox');
+        const forgotLink = document.getElementById('forgotLink');
+        const passwordRow = document.getElementById('passwordRow');
+        const oauthRow = document.getElementById('oauthRow');
+        const oauthDivider = document.getElementById('oauthDivider');
+        const resetLinkBox = document.getElementById('resetLinkBox');
+        const resetLinkInput = document.getElementById('resetLinkInput');
+        const copyResetLinkBtn = document.getElementById('copyResetLink');
+        const openResetLinkBtn = document.getElementById('openResetLink');
+
+        function setMessage(text, kind) {
+            messageBox.className = 'message-box show ' + (kind === 'ok' ? 'ok' : 'err');
+            messageBox.textContent = text;
+        }
+        function clearMessage() {
+            messageBox.className = 'message-box';
+            messageBox.textContent = '';
+            resetLinkBox.hidden = true;
+        }
+
+        // OAuth error toasts from query string
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('error');
+        if (err === 'oauth_google_failed') setMessage('Google sign-in failed. Please try again.', 'err');
+        if (err === 'oauth_github_failed') setMessage('GitHub sign-in failed. Please try again.', 'err');
+        if (params.get('mode') === 'forgot') switchMode(MODE.FORGOT);
+
+        function switchMode(next) {
+            mode = next;
+            clearMessage();
+            const showPwd = next !== MODE.FORGOT;
+            passwordRow.style.display = showPwd ? '' : 'none';
+            document.getElementById('password').required = showPwd;
+            if (oauthRow) oauthRow.style.display = showPwd ? '' : 'none';
+            if (oauthDivider) oauthDivider.style.display = showPwd ? '' : 'none';
+
+            if (next === MODE.SIGNIN) {
+                title.textContent = 'Sign in to Studio';
+                subtitle.textContent = 'Welcome back. Sign in to continue training, cloning, and tuning your avatars.';
+                submitBtn.textContent = 'Sign in';
+                toggleHint.textContent = "Don't have an account? ";
+                toggleBtn.textContent = 'Create one';
+            } else if (next === MODE.SIGNUP) {
+                title.textContent = 'Create an account';
+                subtitle.textContent = 'Register a new Studio account and start creating in seconds.';
+                submitBtn.textContent = 'Create account';
+                toggleHint.textContent = 'Already registered? ';
+                toggleBtn.textContent = 'Sign in';
+            } else {
+                title.textContent = 'Reset your password';
+                subtitle.textContent = 'Enter the email associated with your account. We\'ll generate a one-time reset link.';
+                submitBtn.textContent = 'Send reset link';
+                toggleHint.textContent = 'Remembered it? ';
+                toggleBtn.textContent = 'Back to sign in';
+            }
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            if (mode === MODE.SIGNIN) switchMode(MODE.SIGNUP);
+            else switchMode(MODE.SIGNIN);
+        });
+        forgotLink.addEventListener('click', () => switchMode(MODE.FORGOT));
+
+        // Show/hide password
+        document.querySelectorAll('.input-eye').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const t = document.getElementById(btn.dataset.target);
+                if (!t) return;
+                const shown = t.type === 'text';
+                t.type = shown ? 'password' : 'text';
+                btn.innerHTML = shown ? '<i class="fa-regular fa-eye"></i>' : '<i class="fa-regular fa-eye-slash"></i>';
+            });
+        });
+
+        copyResetLinkBtn.addEventListener('click', () => {
+            resetLinkInput.select();
+            navigator.clipboard.writeText(resetLinkInput.value).then(() => {
+                copyResetLinkBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+                setTimeout(() => { copyResetLinkBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy'; }, 1500);
+            });
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearMessage();
+            submitBtn.disabled = true;
+            const orig = submitBtn.textContent;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Working…';
+
+            const fd = new FormData(form);
+            try {
+                if (mode === MODE.FORGOT) {
+                    fd.set('email', fd.get('username'));
+                    fd.delete('username');
+                    fd.delete('password');
+                    const r = await fetch('/api/password-reset/request', { method: 'POST', body: fd });
+                    const d = await r.json();
+                    setMessage(d.message, 'ok');
+                    if (d.reset_url) {
+                        resetLinkInput.value = d.reset_url;
+                        openResetLinkBtn.href = d.reset_url;
+                        resetLinkBox.hidden = false;
+                    }
+                } else {
+                    const endpoint = mode === MODE.SIGNIN ? '/api/login' : '/api/register';
+                    const r = await fetch(endpoint, { method: 'POST', body: fd });
+                    const d = await r.json();
+                    if (!r.ok) throw new Error(d.message || 'Something went wrong');
+                    const msg = d.message + (d.role ? ` (assigned: ${d.role})` : '');
+                    setMessage(msg, 'ok');
+                    setTimeout(() => window.location.replace('/'), 500);
+                }
+            } catch (err) {
+                setMessage(err.message, 'err');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = orig;
+            }
+        });
+    {% endif %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,2616 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{% if onboarding %}Create your Avatar — {{ onboarding.client_name }}{% else %}Upload link unavailable{% endif %} · Avatar Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="/static/img/favicon.ico">
+    <style>
+        :root {
+            --bg:        #f4f5f7;
+            --surface:   #ffffff;
+            --surface-2: #f8f9fc;
+            --surface-3: #f1f2f6;
+            --border:    #e5e7eb;
+            --border-2:  #d1d5db;
+            --text-1:    #0b0c0f;
+            --text-2:    #4b5563;
+            --text-3:    #6b7280;
+            --brand:     #6366f1;
+            --brand-2:   #4f46e5;
+            --brand-3:   #4338ca;
+            --success:   #10b981;
+            --danger:    #ef4444;
+            --warn:      #f59e0b;
+            --radius:    18px;
+            --radius-sm: 12px;
+            --shadow:    0 12px 48px -16px rgba(15, 23, 42, .12);
+            --shadow-lg: 0 24px 64px -16px rgba(15, 23, 42, .18);
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-1);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        a { color: var(--brand-2); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            background: var(--surface-2);
+            padding: 2px 6px; border-radius: 4px;
+            font-size: 13px;
+        }
+        button { font: inherit; cursor: pointer; }
+        :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+
+        /* ── Top bar ─────────────────────────────────────────────────── */
+        .topbar {
+            position: sticky; top: 0; z-index: 20;
+            background: rgba(255, 255, 255, .9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 28px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .brand {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-weight: 800; font-size: 17px;
+        }
+        .brand .logo {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+            border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: white;
+        }
+        .topbar .crumb { color: var(--text-2); font-weight: 500; font-size: 14px; }
+        .topbar .sep   { color: var(--text-3); }
+        .topbar .lock  {
+            margin-left: auto;
+            color: var(--text-3); font-size: 12.5px;
+        }
+        .topbar .lock i { margin-right: 4px; color: var(--success); }
+
+        /* ── Stepper ─────────────────────────────────────────────────── */
+        .stepper {
+            display: flex; align-items: center; gap: 8px;
+            padding: 20px 16px 0;
+            max-width: 1080px;
+            margin: 0 auto;
+            justify-content: center;
+        }
+        .step {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: var(--text-3); font-size: 13px; font-weight: 600;
+            position: relative;
+        }
+        .step .step-dot {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--border-2);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 12.5px; font-weight: 800;
+            transition: all .2s ease;
+        }
+        .step.is-current .step-dot {
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 6px 14px -4px rgba(99, 102, 241, .55);
+        }
+        .step.is-done .step-dot {
+            background: var(--success);
+            border-color: transparent;
+            color: white;
+        }
+        .step.is-current { color: var(--text-1); }
+        .step.is-done   { color: var(--text-2); }
+        .step-bar {
+            width: 36px; height: 2px;
+            background: var(--border-2);
+        }
+        .step-bar.is-done { background: var(--success); }
+        @media (max-width: 640px) {
+            .step .step-label { display: none; }
+            .step-bar { width: 16px; }
+        }
+
+        /* ── Layout ─────────────────────────────────────────────────── */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 22px 18px 100px;
+        }
+        .wizard-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .wizard-head {
+            text-align: center;
+            padding: 28px 28px 8px;
+        }
+        .wizard-head h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -.01em;
+        }
+        .wizard-head .sub {
+            margin-top: 6px;
+            color: var(--text-2);
+            font-size: 14.5px;
+            line-height: 1.55;
+        }
+        .wizard-head .sub a { font-weight: 700; text-decoration: underline; }
+
+        /* ── Mode tabs ────────────────────────────────────────────────── */
+        .mode-tabs {
+            margin: 18px auto 0;
+            display: inline-flex;
+            background: var(--surface-3);
+            border-radius: 999px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+        .mode-tabs-wrap { display: flex; justify-content: center; padding: 0 28px; }
+        .mode-tab {
+            background: transparent;
+            border: 0;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-weight: 600; font-size: 13.5px;
+            color: var(--text-2);
+            display: inline-flex; gap: 7px; align-items: center;
+            transition: all .15s ease;
+        }
+        .mode-tab i { font-size: 12px; }
+        .mode-tab.is-active {
+            background: var(--surface);
+            color: var(--text-1);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, .07);
+        }
+
+        /* ── Stage (the big content area) ─────────────────────────────── */
+        .stage {
+            margin: 18px 28px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            min-height: 320px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stage-empty {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center;
+            min-height: 280px; gap: 8px;
+        }
+        .stage-empty .icon {
+            position: relative;
+            width: 88px; height: 88px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-2); font-size: 32px;
+            margin-bottom: 6px;
+            box-shadow: 0 12px 24px -12px rgba(15, 23, 42, .12);
+        }
+        .stage-empty .icon::after {
+            content: ""; position: absolute; top: -6px; right: -6px;
+            width: 26px; height: 26px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><path d='M4.7 4.7l6.6 6.6m0-6.6l-6.6 6.6' stroke='white' stroke-width='2' stroke-linecap='round'/></svg>");
+            background-repeat: no-repeat;
+            background-position: center;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, .35);
+            display: none;
+        }
+        .stage-empty.is-error .icon::after { display: block; }
+        .stage-empty h3 { margin: 6px 0 0; font-size: 17px; font-weight: 700; }
+        .stage-empty .desc { color: var(--text-3); font-size: 13.5px; max-width: 420px; }
+        .stage-empty .troubleshoot {
+            margin-top: 6px;
+            font-size: 13px; font-weight: 700; color: var(--text-1);
+            text-decoration: underline;
+        }
+
+        /* ── Webcam stage ─────────────────────────────────────────────── */
+        .cam-wrap {
+            position: relative;
+            border-radius: 16px;
+            background: #0b0c0f;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .cam-wrap video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            background: black;
+            transform: scaleX(-1);  /* mirror for natural preview */
+        }
+        .cam-wrap video.no-mirror { transform: none; }
+        .cam-state {
+            position: absolute; left: 14px; top: 14px;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 700;
+            background: rgba(11, 12, 15, .65);
+            color: white;
+            padding: 5px 10px; border-radius: 999px;
+            backdrop-filter: blur(6px);
+        }
+        .cam-state .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, .2);
+        }
+        .cam-state.is-rec .dot {
+            background: var(--danger);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, .25);
+            animation: pulseRec 1s infinite;
+        }
+        @keyframes pulseRec {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(239, 68, 68, .25); }
+            50%      { box-shadow: 0 0 0 8px rgba(239, 68, 68, .12); }
+        }
+        .cam-timer {
+            position: absolute; right: 14px; top: 14px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 13px; font-weight: 700;
+            background: rgba(11, 12, 15, .65);
+            color: white;
+            padding: 5px 10px; border-radius: 999px;
+            backdrop-filter: blur(6px);
+        }
+        .cam-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.65));
+            color: white;
+            text-align: center;
+            padding: 24px;
+        }
+        .cam-overlay .big {
+            font-size: 92px; font-weight: 800; line-height: 1;
+            text-shadow: 0 6px 18px rgba(0,0,0,.4);
+        }
+        .cam-mic-meter {
+            position: absolute; left: 50%; bottom: 14px;
+            transform: translateX(-50%);
+            width: 60%; max-width: 280px;
+            height: 6px;
+            background: rgba(255, 255, 255, .18);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .cam-mic-meter > span {
+            display: block; height: 100%;
+            background: linear-gradient(90deg, #34d399 0%, #facc15 60%, #ef4444 100%);
+            width: 0%;
+            transition: width .08s linear;
+        }
+        .cam-wrap.aspect-portrait { aspect-ratio: 9 / 16; max-width: 380px; margin: 0 auto; }
+
+        /* Device pickers below the preview */
+        .cam-devices {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 720px) {
+            .cam-devices { grid-template-columns: 1fr; }
+        }
+        .dev-pick {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0;
+            min-height: 44px;
+        }
+        .dev-pick.is-mic { background: linear-gradient(180deg, #f5f3ff, #ffffff); border-color: #c4b5fd; }
+        .dev-pick select {
+            appearance: none;
+            -webkit-appearance: none;
+            background: transparent;
+            border: 0;
+            width: 100%;
+            font: inherit; font-size: 13.5px; font-weight: 600;
+            color: var(--text-1);
+            padding: 11px 36px 11px 38px;
+            cursor: pointer;
+            outline: none;
+        }
+        .dev-pick .icon {
+            position: absolute; left: 12px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-2);
+            font-size: 13px; pointer-events: none;
+        }
+        .dev-pick.is-mic .icon { color: #7c3aed; }
+        .dev-pick .chev {
+            position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-3); font-size: 11px;
+            pointer-events: none;
+        }
+
+        /* ── Intro modal "Recording a great avatar" ───────────────────── */
+        .modal-shade {
+            position: fixed; inset: 0;
+            background: rgba(11, 12, 15, .45);
+            backdrop-filter: blur(6px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 50;
+            padding: 20px;
+        }
+        .modal-shade.is-on { display: flex; }
+        .modal {
+            background: var(--surface);
+            border-radius: 22px;
+            box-shadow: var(--shadow-lg);
+            max-width: 720px; width: 100%;
+            padding: 28px;
+            position: relative;
+            animation: modalPop .18s ease-out;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: translateY(8px) scale(.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-close {
+            position: absolute; right: 14px; top: 14px;
+            width: 32px; height: 32px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--surface);
+            color: var(--text-2);
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { color: var(--text-1); border-color: var(--text-2); }
+        .modal h2 { margin: 0 0 6px; font-size: 22px; font-weight: 800; }
+        .modal .modal-sub {
+            color: var(--text-2); font-size: 14px; line-height: 1.55; margin-bottom: 18px;
+        }
+        .dodont {
+            background: var(--surface-2);
+            border-radius: 16px;
+            padding: 14px;
+        }
+        .dodont-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 600px) { .dodont-grid { grid-template-columns: 1fr; } }
+        .dodont-card {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--surface-3);
+        }
+        .dodont-card .label {
+            position: absolute; left: 10px; top: 10px;
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(11, 12, 15, .8);
+            color: white;
+            padding: 5px 10px; border-radius: 999px;
+            font-size: 12px; font-weight: 700;
+            z-index: 2;
+            backdrop-filter: blur(6px);
+        }
+        .dodont-card .label i { font-size: 11px; }
+        .dodont-card.is-do .label i    { color: #10b981; }
+        .dodont-card.is-dont .label i  { color: #ef4444; }
+        .dodont-card .illu {
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 100%);
+            color: white;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 14px;
+            font-size: 60px;
+            opacity: .9;
+        }
+        .dodont-card.is-do .illu {
+            background: linear-gradient(135deg, #db2777 0%, #4f46e5 60%, #06b6d4 100%);
+        }
+        .dodont-card.is-dont .illu {
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+        }
+        .dodont-tips {
+            margin-top: 14px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .dodont-tips li {
+            list-style: none;
+            display: flex; gap: 10px; align-items: center;
+            font-size: 14px; color: var(--text-1); font-weight: 500;
+        }
+        .dodont-tips li i {
+            color: var(--text-1);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 10px;
+        }
+        .modal-actions {
+            display: flex; align-items: center; justify-content: center;
+            gap: 12px; margin-top: 20px;
+        }
+        .btn-record-big {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #0b0c0f;
+            color: white;
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 28px;
+            font-weight: 700; font-size: 15px;
+            box-shadow: 0 12px 32px -8px rgba(11, 12, 15, .55);
+            transition: transform .15s ease;
+        }
+        .btn-record-big:hover { transform: translateY(-1px); }
+        .btn-record-big .rec-dot {
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, .25);
+            animation: pulseRec 1.2s infinite;
+        }
+
+        /* ── Full-screen recording mode ──────────────────────────────── */
+        .cam-fs {
+            position: fixed; inset: 0;
+            background: #0b0c0f;
+            z-index: 70;
+            display: none;
+        }
+        .cam-fs.is-on { display: block; }
+        .cam-fs video {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            background: black;
+            transform: scaleX(-1);
+        }
+        .cam-fs video.no-mirror { transform: none; }
+        .cam-fs-top {
+            position: absolute; left: 0; right: 0; top: 0;
+            padding: 18px 22px;
+            display: flex; align-items: flex-start; gap: 14px;
+            z-index: 4;
+        }
+        .cam-fs-tele {
+            flex: 1;
+            background: rgba(11, 12, 15, .55);
+            color: white;
+            border-radius: 16px;
+            padding: 14px 22px;
+            font-size: 17px; line-height: 1.5;
+            font-weight: 500;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            max-width: 720px; margin: 0 auto;
+            max-height: 22vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            box-shadow: 0 12px 32px -16px rgba(0, 0, 0, .55);
+        }
+        .cam-fs-tele::-webkit-scrollbar { display: none; }
+        .cam-fs-tele .tele-line {
+            padding: 4px 0;
+            opacity: .35;
+            transition: opacity .35s ease, color .35s ease;
+        }
+        .cam-fs-tele .tele-line.is-past { opacity: .18; }
+        .cam-fs-tele .tele-line.is-now {
+            opacity: 1;
+            color: #fde68a;
+            font-weight: 600;
+        }
+        .cam-fs-side {
+            display: flex; gap: 10px; align-items: center;
+            position: absolute; right: 22px; top: 22px;
+        }
+        .cam-fs-time {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(11, 12, 15, .65);
+            color: white;
+            padding: 6px 12px; border-radius: 999px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 13px; font-weight: 700;
+            backdrop-filter: blur(8px);
+        }
+        .cam-fs-time .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, .25);
+            animation: pulseRec 1s infinite;
+        }
+        .cam-fs-close {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: rgba(11, 12, 15, .65);
+            color: white;
+            border: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(8px);
+        }
+        .cam-fs-close:hover { background: rgba(11, 12, 15, .85); }
+        .cam-fs-bottom {
+            position: absolute; left: 0; right: 0; bottom: 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            z-index: 4;
+        }
+        .cam-fs-progress {
+            position: relative;
+            width: min(420px, 60vw);
+            height: 6px;
+            background: rgba(255,255,255,.18);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .cam-fs-progress .min-mark {
+            position: absolute; top: -3px; bottom: -3px;
+            width: 2px; background: rgba(255,255,255,.55);
+            border-radius: 2px;
+        }
+        .cam-fs-progress .fill {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            background: linear-gradient(90deg, #fbbf24, #f97316);
+            border-radius: 999px;
+            width: 0%;
+            transition: width .25s linear;
+        }
+        .cam-fs-progress.is-ok .fill {
+            background: linear-gradient(90deg, #34d399, #059669);
+        }
+        .cam-fs-hint {
+            color: rgba(255,255,255,.85);
+            font-size: 12.5px;
+            font-weight: 500;
+            background: rgba(11,12,15,.55);
+            padding: 5px 12px;
+            border-radius: 999px;
+            backdrop-filter: blur(8px);
+        }
+        .cam-fs-stop {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: #ef4444;
+            color: white;
+            border: 0;
+            padding: 14px 28px;
+            border-radius: 999px;
+            font-weight: 700; font-size: 14px;
+            box-shadow: 0 16px 36px -10px rgba(239, 68, 68, .55);
+            transition: opacity .15s ease, transform .15s ease;
+        }
+        .cam-fs-stop:hover:not(:disabled) { background: #dc2626; transform: translateY(-1px); }
+        .cam-fs-stop:disabled {
+            background: rgba(255,255,255,.18);
+            color: rgba(255,255,255,.55);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .cam-fs-stop .square {
+            width: 12px; height: 12px;
+            background: currentColor;
+            border-radius: 2px;
+        }
+        .cam-fs-countdown {
+            position: absolute; inset: 0;
+            display: none; align-items: center; justify-content: center;
+            background: rgba(11, 12, 15, .55);
+            backdrop-filter: blur(2px);
+            z-index: 3;
+        }
+        .cam-fs-countdown.is-on { display: flex; }
+        .cam-fs-countdown .num {
+            font-size: 140px; font-weight: 900;
+            color: white;
+            text-shadow: 0 12px 40px rgba(0,0,0,.55);
+            animation: pulseRec 1s infinite;
+        }
+
+        /* ── Teleprompter ─────────────────────────────────────────────── */
+        .tele {
+            margin-top: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            max-height: 180px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            font-size: 16px;
+            line-height: 1.55;
+            color: var(--text-2);
+        }
+        .tele-line {
+            padding: 5px 0;
+            transition: color .25s ease, font-weight .25s ease;
+        }
+        .tele-line.is-now {
+            color: var(--text-1);
+            font-weight: 700;
+        }
+        .tele-line.is-done {
+            color: var(--text-3);
+            text-decoration: line-through;
+            text-decoration-color: rgba(15, 23, 42, .2);
+        }
+
+        /* ── Phone QR ─────────────────────────────────────────────────── */
+        .qr-wrap {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 28px; align-items: center;
+        }
+        .qr-box {
+            background: white; padding: 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .qr-box img, .qr-box canvas {
+            width: 196px; height: 196px; display: block;
+        }
+        .qr-info h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
+        .qr-info ol {
+            padding-left: 18px; color: var(--text-2);
+            line-height: 1.6; font-size: 14px;
+        }
+        .qr-info ol li { margin-bottom: 4px; }
+        .qr-info .url {
+            margin-top: 12px;
+            display: inline-flex; gap: 6px; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 8px 12px; border-radius: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 12.5px;
+            word-break: break-all;
+        }
+        @media (max-width: 720px) {
+            .qr-wrap { grid-template-columns: 1fr; text-align: center; }
+            .qr-box { justify-self: center; }
+        }
+
+        /* ── Upload stage ─────────────────────────────────────────────── */
+        .up-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 880px) { .up-grid { grid-template-columns: 1fr; } }
+        .upload-pane { display: flex; flex-direction: column; gap: 14px; }
+
+        .drop {
+            display: block;
+            position: relative;
+            background: var(--surface);
+            border: 2px dashed var(--border-2);
+            border-radius: 16px;
+            padding: 36px 22px;
+            text-align: center;
+            transition: border-color .15s ease, background .15s ease;
+            cursor: pointer;
+        }
+        .drop:hover, .drop.is-drag {
+            border-color: var(--brand);
+            background: linear-gradient(180deg, rgba(99,102,241,.05) 0%, rgba(255,255,255,1) 100%);
+        }
+        .drop-icon {
+            font-size: 38px;
+            color: var(--brand-2);
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .drop-title { font-size: 17px; font-weight: 700; color: var(--text-1); }
+        .drop-sub   { font-size: 14px; color: var(--text-2); margin-top: 4px; }
+        .drop-link  { color: var(--brand-2); font-weight: 600; text-decoration: underline; }
+        .drop-formats {
+            color: var(--text-3); font-size: 12px;
+            margin-top: 12px; letter-spacing: 0.01em;
+        }
+
+        .drop-divider {
+            display: flex; align-items: center; gap: 14px;
+            color: var(--text-3); font-size: 11px; font-weight: 700;
+            letter-spacing: 0.15em;
+        }
+        .drop-divider::before, .drop-divider::after {
+            content: ""; flex: 1; height: 1px; background: var(--border);
+        }
+
+        .drive-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .drive-card:focus-within {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .12);
+        }
+        .drive-card-head {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 14px; font-weight: 600; color: var(--text-1);
+        }
+        .drive-card-title { font-size: 13.5px; font-weight: 600; }
+        .drive-card input {
+            width: 100%;
+            font: inherit; font-size: 14px;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            outline: none;
+            background: var(--surface-2);
+        }
+        .drive-card input:focus {
+            background: white; border-color: var(--brand);
+        }
+        .drive-card .hint { font-size: 12px; color: var(--text-3); }
+
+        .files {
+            margin-top: 14px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .file-row {
+            display: grid;
+            grid-template-columns: 32px 1fr auto auto;
+            gap: 10px; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+        .file-row .ft-icon {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(99, 102, 241, .12); color: var(--brand-2);
+        }
+        .file-row .ft-name {
+            font-weight: 600; font-size: 13.5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .file-row .ft-size { color: var(--text-3); font-size: 12px; }
+        .file-row .ft-remove {
+            background: transparent; border: 0;
+            color: var(--text-3); padding: 4px 6px; border-radius: 6px;
+        }
+        .file-row .ft-remove:hover { color: var(--danger); background: rgba(239, 68, 68, .08); }
+
+        .tips {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .tips h4 {
+            margin: 0 0 10px; font-size: 14px; font-weight: 700;
+        }
+        .tips ul { list-style: none; padding: 0; margin: 0; }
+        .tips li {
+            display: flex; gap: 8px; align-items: flex-start;
+            padding: 6px 0;
+            font-size: 13px; line-height: 1.45; color: var(--text-2);
+        }
+        .tips li i { color: var(--success); margin-top: 3px; flex-shrink: 0; }
+        .tips .sample {
+            margin-bottom: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+            background: linear-gradient(135deg, #4338ca, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 12px; font-weight: 600;
+            opacity: .85;
+        }
+
+        /* ── Footer (language + ready) ────────────────────────────────── */
+        .wizard-foot {
+            display: flex; flex-wrap: wrap; gap: 16px;
+            align-items: center; justify-content: center;
+            padding: 6px 28px 28px;
+            position: relative;
+        }
+        .lang-pick {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 13.5px; color: var(--text-2);
+        }
+        .lang-select {
+            position: relative;
+        }
+        .lang-trigger {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: transparent;
+            border: 1px solid var(--border-2);
+            color: var(--text-1);
+            font-weight: 600; font-size: 13.5px;
+            padding: 7px 12px; border-radius: 999px;
+        }
+        .lang-trigger:hover { border-color: var(--brand); color: var(--brand-2); }
+        .lang-pop {
+            position: absolute; bottom: calc(100% + 6px); left: 0;
+            min-width: 180px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
+            padding: 6px;
+            display: none;
+            z-index: 30;
+        }
+        .lang-pop.is-open { display: block; }
+        .lang-pop button {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+            background: transparent; border: 0;
+            text-align: left;
+            padding: 8px 10px;
+            font-size: 13.5px; font-weight: 500;
+            color: var(--text-1);
+            border-radius: 8px;
+        }
+        .lang-pop button:hover { background: var(--surface-2); }
+        .lang-pop button.is-active { color: var(--brand-2); font-weight: 700; }
+        .lang-pop button .check { color: var(--brand-2); font-size: 12px; opacity: 0; }
+        .lang-pop button.is-active .check { opacity: 1; }
+
+        .wizard-actions {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0 28px 28px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .wizard-actions .right {
+            display: flex; gap: 10px; align-items: center;
+            margin-left: auto;
+        }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            font: inherit; font-weight: 600; font-size: 14px;
+            border-radius: 12px; padding: 12px 22px;
+            border: 0; transition: all .15s ease;
+        }
+        .btn-primary {
+            background: #0b0c0f;
+            color: white;
+        }
+        .btn-primary:hover { background: #1f2937; transform: translateY(-1px); }
+        .btn-primary:disabled {
+            background: var(--surface-3);
+            color: var(--text-3);
+            cursor: not-allowed; transform: none;
+        }
+        .btn-ghost {
+            background: transparent; color: var(--text-2);
+        }
+        .btn-ghost:hover { color: var(--text-1); }
+        .btn-record {
+            background: var(--danger);
+            color: white;
+            box-shadow: 0 8px 24px -8px rgba(239, 68, 68, .55);
+        }
+        .btn-record:hover { background: #dc2626; transform: translateY(-1px); }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-1);
+            border: 1px solid var(--border-2);
+        }
+        .btn-secondary:hover { border-color: var(--brand); color: var(--brand-2); }
+
+        /* ── Review + voice steps ──────────────────────────────────────── */
+        .voice-card {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 880px) { .voice-card { grid-template-columns: 1fr; } }
+        .voice-preview {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+            border-radius: 16px;
+            padding: 28px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 320px;
+            display: flex; flex-direction: column;
+        }
+        .voice-preview::after {
+            content: "";
+            position: absolute;
+            right: -100px; top: -120px;
+            width: 280px; height: 280px;
+            background: radial-gradient(circle, rgba(255,255,255,.16), transparent 60%);
+        }
+        .voice-preview h3 { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
+        .voice-preview .desc { font-size: 13.5px; opacity: .85; line-height: 1.5; }
+        .voice-wave {
+            margin: auto 0;
+            display: flex; align-items: center; justify-content: center;
+            gap: 4px;
+            height: 100px;
+        }
+        .voice-wave span {
+            width: 4px;
+            background: rgba(255,255,255,.5);
+            border-radius: 999px;
+            min-height: 6px;
+            transition: height .12s linear;
+        }
+        .voice-wave.is-rec span { background: #f87171; }
+        .voice-controls {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            margin-top: 14px;
+        }
+        .voice-controls .mic-btn {
+            background: white; color: var(--brand-3);
+            border: 0;
+            width: 44px; height: 44px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 24px -8px rgba(255, 255, 255, .35);
+            font-size: 16px;
+        }
+        .voice-controls .mic-btn.is-rec {
+            background: var(--danger); color: white;
+            animation: pulseRec 1s infinite;
+        }
+        .voice-controls .mic-time {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-weight: 700;
+        }
+        .voice-controls .mic-skip {
+            margin-left: auto;
+            background: rgba(255, 255, 255, .12);
+            color: white;
+            border: 0;
+            padding: 8px 14px; border-radius: 999px;
+            font-size: 12.5px; font-weight: 600;
+        }
+        .voice-controls .mic-skip:hover { background: rgba(255, 255, 255, .2); }
+
+        .voice-script {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            display: flex; flex-direction: column;
+            max-height: 360px;
+        }
+        .voice-script h4 { margin: 0 0 4px; font-size: 14px; font-weight: 700; }
+        .voice-script .desc { font-size: 12.5px; color: var(--text-3); margin-bottom: 10px; }
+        .voice-script .tele {
+            margin-top: 0; flex: 1;
+            max-height: none;
+            background: var(--surface-2);
+        }
+
+        .review-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .review-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: grid;
+            grid-template-columns: 36px 1fr auto;
+            gap: 12px; align-items: center;
+        }
+        .review-item .ri-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(99, 102, 241, .12); color: var(--brand-2);
+        }
+        .review-item.ok .ri-icon { background: rgba(16, 185, 129, .12); color: var(--success); }
+        .review-item .ri-title { font-weight: 700; font-size: 14px; }
+        .review-item .ri-sub   { font-size: 12.5px; color: var(--text-3); }
+
+        /* ── Progress overlay ─────────────────────────────────────────── */
+        .progress-overlay {
+            position: fixed; inset: 0;
+            background: rgba(11, 12, 15, .55);
+            backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 40;
+            padding: 20px;
+        }
+        .progress-overlay.is-on { display: flex; }
+        .progress-card {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 28px;
+            max-width: 420px; width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+        .progress-card h3 { margin: 8px 0 4px; font-size: 18px; }
+        .progress-card .desc { color: var(--text-3); font-size: 13px; margin-bottom: 16px; }
+        .progress-card .progress {
+            height: 10px;
+            background: var(--surface-3);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-card .progress .fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--brand), var(--brand-2));
+            transition: width .15s ease;
+        }
+        .progress-card .pct {
+            margin-top: 8px; font-weight: 700; font-size: 13px; color: var(--text-2);
+        }
+
+        /* ── Toasts / alerts ──────────────────────────────────────────── */
+        .alert {
+            display: flex; gap: 10px;
+            align-items: flex-start;
+            padding: 12px 14px;
+            background: #fef3c7; color: #92400e;
+            border-radius: 10px; font-size: 13.5px; line-height: 1.5;
+            margin-top: 12px;
+        }
+        .alert.alert-danger { background: #fee2e2; color: #991b1b; }
+        .alert i { margin-top: 2px; }
+
+        /* ── Success screen ───────────────────────────────────────────── */
+        .success-card {
+            text-align: center;
+            padding: 44px 28px;
+        }
+        .success-card .crest {
+            width: 84px; height: 84px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white; border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 34px; margin: 0 auto 16px;
+            box-shadow: 0 24px 36px -16px rgba(16, 185, 129, .55);
+        }
+        .success-card h2 { margin: 0; font-size: 24px; font-weight: 800; }
+        .success-card .desc {
+            margin: 10px auto 20px;
+            max-width: 480px;
+            color: var(--text-2); line-height: 1.55;
+        }
+        .success-card .meta {
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+        }
+        .success-card .meta a {
+            display: inline-flex; gap: 6px; align-items: center;
+            padding: 9px 16px; border-radius: 999px;
+            background: var(--surface-2); color: var(--text-1);
+            font-weight: 600; font-size: 13px;
+            border: 1px solid var(--border);
+        }
+        .success-card .meta a:hover { border-color: var(--brand); color: var(--brand-2); }
+
+        @media (max-width: 600px) {
+            .container { padding: 18px 12px 80px; }
+            .wizard-head { padding: 22px 18px 8px; }
+            .wizard-head h1 { font-size: 22px; }
+            .stage { margin: 14px 14px; padding: 18px; }
+            .wizard-actions { padding: 0 18px 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="brand">
+            <span class="logo"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+            Avatar Studio
+        </span>
+        <span class="sep">/</span>
+        <span class="crumb">Create your avatar</span>
+        <span class="lock"><i class="fa-solid fa-lock"></i> Private link · auto-expires after upload</span>
+    </div>
+
+    <div class="container">
+        {% if not onboarding %}
+            <div class="wizard-card">
+                <div class="wizard-head">
+                    <h1>Link unavailable</h1>
+                    <div class="sub">{{ error or "This onboarding link is invalid or has been revoked." }}</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-empty is-error">
+                        <div class="icon"><i class="fa-solid fa-link-slash"></i></div>
+                        <h3>We couldn't find this link</h3>
+                        <div class="desc">Please reach out to your Avatar Studio contact for a fresh upload link.</div>
+                    </div>
+                </div>
+            </div>
+
+        {% elif onboarding.status == 'uploaded' %}
+            <div class="wizard-card success-card">
+                <div class="crest"><i class="fa-solid fa-check"></i></div>
+                <h2>Your files are with our team</h2>
+                <div class="desc">
+                    We received your footage on {{ onboarding.submitted_at[:10] if onboarding.submitted_at else 'a previous date' }}.
+                    Your production manager will reach out shortly with the next steps. If you need to send
+                    additional materials, please contact your Avatar Studio manager for a fresh link.
+                </div>
+                <div class="meta">
+                    {% if onboarding.drive_folder_url %}
+                    <a href="{{ onboarding.drive_folder_url }}" target="_blank" rel="noreferrer">
+                        <i class="fa-brands fa-google-drive"></i> View your folder
+                    </a>
+                    {% endif %}
+                    {% if onboarding.jira_issue_key %}
+                    <a href="{{ onboarding.jira_issue_url or '#' }}" target="_blank" rel="noreferrer">
+                        <i class="fa-solid fa-ticket"></i> Ticket {{ onboarding.jira_issue_key }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Stepper ─────────────────────────────────────────────── -->
+            <div class="stepper" id="stepper">
+                <div class="step is-current" data-step="1">
+                    <span class="step-dot">1</span>
+                    <span class="step-label">Welcome</span>
+                </div>
+                <span class="step-bar"></span>
+                <div class="step" data-step="2">
+                    <span class="step-dot">2</span>
+                    <span class="step-label">Avatar footage</span>
+                </div>
+                <span class="step-bar"></span>
+                <div class="step" data-step="3">
+                    <span class="step-dot">3</span>
+                    <span class="step-label">Voice sample</span>
+                </div>
+                <span class="step-bar"></span>
+                <div class="step" data-step="4">
+                    <span class="step-dot">4</span>
+                    <span class="step-label">Review</span>
+                </div>
+            </div>
+
+            <!-- ─── STEP 1 · Welcome ───────────────────────────────── -->
+            <div class="wizard-card step-card" data-card="1" id="card-1">
+                <div class="wizard-head">
+                    <h1>Welcome, {{ onboarding.client_name }}!</h1>
+                    <div class="sub">
+                        Let's create your custom avatar in a few minutes. You can record on the spot
+                        with your webcam, continue on your phone, or upload footage you already have.
+                    </div>
+                </div>
+                <div class="stage" style="background: var(--surface);">
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px;" id="welcome-tiles">
+                        <div class="tips" style="text-align:center;">
+                            <div style="width:48px;height:48px;border-radius:14px;background:rgba(99,102,241,.12);color:var(--brand-2);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">
+                                <i class="fa-solid fa-video"></i>
+                            </div>
+                            <h4 style="font-size:14px;">Record your avatar</h4>
+                            <div style="font-size:12.5px;color:var(--text-3);line-height:1.45;">Webcam, phone, or upload a clip you already have.</div>
+                        </div>
+                        <div class="tips" style="text-align:center;">
+                            <div style="width:48px;height:48px;border-radius:14px;background:rgba(99,102,241,.12);color:var(--brand-2);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">
+                                <i class="fa-solid fa-microphone"></i>
+                            </div>
+                            <h4 style="font-size:14px;">Add your voice</h4>
+                            <div style="font-size:12.5px;color:var(--text-3);line-height:1.45;">Optional — clone your voice in any of 9 languages.</div>
+                        </div>
+                        <div class="tips" style="text-align:center;">
+                            <div style="width:48px;height:48px;border-radius:14px;background:rgba(99,102,241,.12);color:var(--brand-2);display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px;">
+                                <i class="fa-solid fa-rocket"></i>
+                            </div>
+                            <h4 style="font-size:14px;">We take it from here</h4>
+                            <div style="font-size:12.5px;color:var(--text-3);line-height:1.45;">Our team trains your avatar and reaches out when it's ready.</div>
+                        </div>
+                    </div>
+
+                    {% if onboarding.requirements %}
+                    <div class="alert" style="background:#eef2ff;color:#3730a3;margin-top:16px;">
+                        <i class="fa-solid fa-quote-left"></i>
+                        <div>
+                            <b>Note from your Avatar Studio manager:</b><br>
+                            <span style="white-space:pre-wrap;">{{ onboarding.requirements }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="wizard-actions">
+                    <span class="lang-pick">
+                        <i class="fa-solid fa-envelope"></i> {{ onboarding.client_email }}
+                    </span>
+                    <div class="right">
+                        <button type="button" class="btn btn-primary" data-go="2">
+                            Get started <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── STEP 2 · Footage (Webcam / Phone / Upload) ──────── -->
+            <div class="wizard-card step-card" data-card="2" id="card-2" hidden>
+                <div class="wizard-head">
+                    <h1>Record your avatar footage</h1>
+                    <div class="sub">
+                        We need <b>1 min 30 sec — 2 min</b> of you speaking naturally to the camera.
+                        Record it now, do it on your phone, or
+                        <a href="#" id="jumpToUploadLink">upload existing footage</a>.
+                    </div>
+                </div>
+
+                <div class="mode-tabs-wrap">
+                    <div class="mode-tabs" role="tablist">
+                        <button type="button" class="mode-tab is-active" data-mode="webcam">
+                            <i class="fa-solid fa-video"></i> Record via webcam
+                        </button>
+                        <button type="button" class="mode-tab" data-mode="phone">
+                            <i class="fa-solid fa-mobile-screen"></i> Record via phone
+                        </button>
+                        <button type="button" class="mode-tab" data-mode="upload">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload footage
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stage" id="stage-content">
+                    <!-- ─── Webcam pane ─── -->
+                    <div data-pane="webcam">
+                        <div class="cam-wrap" id="camWrap">
+                            <video id="camPreview" autoplay muted playsinline></video>
+                            <span class="cam-state" id="camState"><span class="dot"></span><span id="camStateLabel">Preview</span></span>
+                            <div class="cam-overlay" id="camOverlay">
+                                <div class="big" id="camOverlayBig">📹</div>
+                            </div>
+                            <div class="cam-mic-meter" hidden id="camMicMeter"><span></span></div>
+                        </div>
+                        <div class="cam-devices" id="camDevices">
+                            <div class="dev-pick">
+                                <i class="icon fa-solid fa-display"></i>
+                                <select id="pickAspect">
+                                    <option value="landscape">Landscape</option>
+                                    <option value="portrait">Portrait</option>
+                                </select>
+                                <i class="chev fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="dev-pick">
+                                <i class="icon fa-solid fa-video"></i>
+                                <select id="pickCamera"><option>Default camera</option></select>
+                                <i class="chev fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="dev-pick is-mic">
+                                <i class="icon fa-solid fa-microphone"></i>
+                                <select id="pickMic"><option>Default microphone</option></select>
+                                <i class="chev fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── Phone pane ─── -->
+                    <div data-pane="phone" hidden>
+                        <div class="qr-wrap">
+                            <div class="qr-box">
+                                <img id="phoneQR" alt="Scan to continue on your phone"
+                                     src="/setup/{{ token }}/qr.svg"
+                                     width="196" height="196"
+                                     style="display:block;width:100%;height:auto;">
+                            </div>
+                            <div class="qr-info">
+                                <h3>Scan this code on your phone</h3>
+                                <ol>
+                                    <li>Open your phone camera and point it at the QR code.</li>
+                                    <li>Tap the link that pops up — your phone opens this same page.</li>
+                                    <li>Record on your phone, then come back here to add a voice sample.</li>
+                                </ol>
+                                <div class="url" id="phoneURL"></div>
+                                <button type="button" class="btn btn-secondary" id="copyPhoneURL" style="margin-top:10px;">
+                                    <i class="fa-regular fa-copy"></i> Copy link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ─── Upload pane ─── -->
+                    <div data-pane="upload" hidden>
+                        <div class="up-grid">
+                            <div class="upload-pane">
+                                <label class="drop" id="drop">
+                                    <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <div class="drop-title">Drop your video here</div>
+                                    <div class="drop-sub">or <span class="drop-link">browse files</span></div>
+                                    <div class="drop-formats">WebM · MP4 · MOV — up to {{ max_file_mb }} MB · {{ max_files }} files max</div>
+                                    <input id="filesInput" type="file" multiple accept="video/*,audio/*" hidden>
+                                </label>
+                                <div class="drop-divider"><span>OR</span></div>
+                                <div class="drive-card">
+                                    <div class="drive-card-head">
+                                        <i class="fa-brands fa-google-drive" style="color:#1FA463;font-size:18px;"></i>
+                                        <div class="drive-card-title">Paste a Google Drive · Dropbox · WeTransfer link</div>
+                                    </div>
+                                    <input id="driveLink" type="url" placeholder="https://drive.google.com/drive/folders/…">
+                                    <div class="hint">Make sure the folder is shared so <b>anyone with the link can view</b>.</div>
+                                </div>
+                                <div id="filesList" class="files"></div>
+                            </div>
+                            <div class="tips">
+                                <div class="sample"><i class="fa-solid fa-play"></i> &nbsp; Sample recording</div>
+                                <h4>Tips for better uploads</h4>
+                                <ul>
+                                    <li><i class="fa-solid fa-circle-check"></i> Speak expressively for at least <b>1 min 30 sec</b></li>
+                                    <li><i class="fa-solid fa-circle-check"></i> Use natural expressions and gestures</li>
+                                    <li><i class="fa-solid fa-circle-check"></i> Pause between sentences</li>
+                                    <li><i class="fa-solid fa-circle-check"></i> Choose a quiet, well-lit space</li>
+                                    <li><i class="fa-solid fa-circle-check"></i> Face the camera straight on</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-foot">
+                    <span class="lang-pick" id="langPickWrap">
+                        We'll provide a script on screen in
+                        <div class="lang-select">
+                            <button type="button" class="lang-trigger" id="langTrigger">
+                                <span id="langLabel">English</span>
+                                <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                            </button>
+                            <div class="lang-pop" id="langPop"></div>
+                        </div>
+                    </span>
+                </div>
+
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-ghost" data-go="1">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                    <div class="right" id="step2Actions">
+                        <!-- Buttons injected per mode -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── STEP 3 · Voice sample ───────────────────────────── -->
+            <div class="wizard-card step-card" data-card="3" id="card-3" hidden>
+                <div class="wizard-head">
+                    <h1>Now let's clone your voice</h1>
+                    <div class="sub">
+                        Read the script below in your own voice. Sounds in <b id="voiceLangName">English</b>.
+                        It's optional, but a 30-second sample dramatically improves the final result.
+                    </div>
+                </div>
+                <div class="stage" style="background:var(--surface);">
+                    <div class="voice-card">
+                        <div class="voice-preview">
+                            <h3><i class="fa-solid fa-microphone-lines"></i> Voice studio</h3>
+                            <div class="desc">Click record and read the script naturally. You'll be able to preview before sending.</div>
+                            <div class="voice-wave" id="voiceWave">
+                                <!-- bars injected via JS -->
+                            </div>
+                            <div class="voice-controls">
+                                <button type="button" class="mic-btn" id="voiceMic" aria-label="Record">
+                                    <i class="fa-solid fa-microphone"></i>
+                                </button>
+                                <span class="mic-time" id="voiceTime">0:00</span>
+                                <button type="button" class="mic-skip" id="voiceSkip">
+                                    Skip — I'll send my own audio
+                                </button>
+                            </div>
+                            <audio id="voicePlayback" controls style="margin-top:12px; width:100%; display:none;"></audio>
+                        </div>
+                        <div class="voice-script">
+                            <h4>Read this script</h4>
+                            <div class="desc">Each line marked with a mood tag — try to match the tone.</div>
+                            <div class="tele" id="voiceTele"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-ghost" data-go="2">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                    <div class="right">
+                        <button type="button" class="btn btn-primary" data-go="4">
+                            Continue <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── STEP 4 · Review ─────────────────────────────────── -->
+            <div class="wizard-card step-card" data-card="4" id="card-4" hidden>
+                <div class="wizard-head">
+                    <h1>Almost done — review &amp; submit</h1>
+                    <div class="sub">Check that everything looks right. We'll create a private Drive folder and notify your production team.</div>
+                </div>
+                <div class="stage" style="background:var(--surface);">
+                    <div class="review-grid" id="reviewGrid"></div>
+                    <div class="alert" id="reviewAlert" hidden></div>
+                </div>
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-ghost" data-go="2">
+                        <i class="fa-solid fa-arrow-left"></i> Back to footage
+                    </button>
+                    <div class="right">
+                        <button type="button" class="btn btn-primary" id="submitBtn">
+                            <i class="fa-solid fa-paper-plane"></i> Submit for production
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Progress overlay ─── -->
+            <div class="progress-overlay" id="progressOverlay">
+                <div class="progress-card">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size:34px;color:var(--brand-2);"></i>
+                    <h3 id="progressTitle">Sending your files…</h3>
+                    <div class="desc" id="progressDesc">Please keep this tab open until upload completes.</div>
+                    <div class="progress"><div class="fill" id="progressFill"></div></div>
+                    <div class="pct" id="progressPct">0%</div>
+                </div>
+            </div>
+
+            <!-- ─── Pre-recording explainer modal ─── -->
+            <div class="modal-shade" id="recIntroShade" role="dialog" aria-modal="true">
+                <div class="modal">
+                    <button type="button" class="modal-close" id="recIntroClose" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <h2>Recording a great avatar</h2>
+                    <p class="modal-sub">
+                        Both your voice and video guide your avatar's motion. Here's how to capture the best footage:
+                    </p>
+                    <div class="dodont">
+                        <div class="dodont-grid">
+                            <div class="dodont-card is-do">
+                                <span class="label"><i class="fa-solid fa-circle-check"></i> DO</span>
+                                <div class="illu">🙋‍♂️</div>
+                            </div>
+                            <div class="dodont-card is-dont">
+                                <span class="label"><i class="fa-solid fa-circle-xmark"></i> DON'T</span>
+                                <div class="illu">🧍</div>
+                            </div>
+                        </div>
+                        <ul class="dodont-tips">
+                            <li><i class="fa-solid fa-check"></i> Speak with high energy (expressive voice → expressive avatar)</li>
+                            <li><i class="fa-solid fa-check"></i> Keep your position stable in the frame</li>
+                            <li><i class="fa-solid fa-check"></i> Use natural gestures — your avatar will mimic them</li>
+                        </ul>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-record-big" id="recIntroStart">
+                            <span class="rec-dot"></span> Start Recording
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Full-screen recording overlay ─── -->
+            <div class="cam-fs" id="camFs">
+                <video id="camFsVideo" autoplay muted playsinline></video>
+                <div class="cam-fs-top">
+                    <div class="cam-fs-tele" id="camFsTele"></div>
+                </div>
+                <div class="cam-fs-side">
+                    <span class="cam-fs-time"><span class="dot"></span><span id="camFsTime">0:00</span></span>
+                    <button type="button" class="cam-fs-close" id="camFsClose" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="cam-fs-bottom">
+                    <div class="cam-fs-progress" id="camFsProgress">
+                        <div class="min-mark" id="camFsMinMark"></div>
+                        <div class="fill" id="camFsFill"></div>
+                    </div>
+                    <span class="cam-fs-hint" id="camFsHint">Speak naturally — minimum 1:30</span>
+                    <button type="button" class="cam-fs-stop" id="camFsStop" disabled>
+                        <span class="square"></span> Stop &amp; save
+                    </button>
+                </div>
+                <div class="cam-fs-countdown" id="camFsCountdown"><div class="num" id="camFsCountdownNum">3</div></div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if onboarding and onboarding.status != 'uploaded' %}
+    <script>
+    (function () {
+        /* ═══════════ State ═══════════ */
+        const TOKEN       = "{{ token }}";
+        const MAX_FILES   = {{ max_files }};
+        const MAX_BYTES   = {{ max_file_mb }} * 1024 * 1024;
+        const ALLOWED_EXT = new Set({{ allowed_extensions | tojson }});
+        const PUBLIC_URL  = location.origin + location.pathname;
+
+        // Localized scripts — matches the language list HeyGen offers.
+        const LANGUAGES = [
+            { code: 'en', label: 'English',     flag: '🇺🇸',
+              video: [
+                  "Hi there! My name is [your name] and today I'm creating my own digital avatar.",
+                  "I'm speaking with lots of energy because that's exactly what my avatar will mirror later.",
+                  "I love working on new things, meeting interesting people, and learning something every single day.",
+                  "Let me share a quick story — last weekend I tried something completely new and a little scary.",
+                  "What surprised me most was how good it felt to just begin without overthinking it.",
+                  "It reminded me that small experiments often lead to the biggest discoveries.",
+                  "If you're watching this and considering trying something new — go for it. You'll thank yourself later.",
+                  "Thanks so much for taking the time to watch this short introduction today.",
+                  "I hope you have an absolutely wonderful day, and I'll talk to you again soon!"
+              ],
+              voice: [
+                  { mood: 'Neutral',  text: "Hello, my name is [your name]. This is a voice recording for cloning purposes." },
+                  { mood: 'Warm',     text: "I genuinely enjoy quiet mornings with a fresh cup of coffee." },
+                  { mood: 'Question', text: "Have you ever wondered what it would feel like to hear your own voice in a different language?" },
+                  { mood: 'Excited',  text: "The technology today can recreate a voice with remarkable accuracy across dozens of languages!" },
+                  { mood: 'Calm',     text: "Take a deep breath. There's no rush — speak as if you were talking to a close friend." },
+                  { mood: 'Serious',  text: "Please read each line carefully and try to match the tone marked next to it." },
+                  { mood: 'Warm',     text: "Thank you so much for your time today — it really means a lot to our team." }
+              ] },
+            { code: 'es', label: 'Español',     flag: '🇪🇸',
+              video: [
+                  "¡Hola! Me llamo [tu nombre] y hoy estoy creando mi propio avatar digital.",
+                  "Estoy hablando con mucha energía porque eso es exactamente lo que mi avatar va a reflejar.",
+                  "Me encanta trabajar en cosas nuevas, conocer gente interesante y aprender algo cada día.",
+                  "Déjame contarte algo — el fin de semana pasado probé algo que nunca había hecho antes.",
+                  "Lo que más me sorprendió fue lo bien que se sintió simplemente empezar sin darle muchas vueltas.",
+                  "Me recordó que los pequeños experimentos suelen llevar a los mayores descubrimientos.",
+                  "Si estás viendo esto y dudando en probar algo nuevo — hazlo. Te lo agradecerás luego.",
+                  "Muchas gracias por tomarte el tiempo de ver esta breve introducción hoy.",
+                  "Espero que tengas un día absolutamente maravilloso, y nos vemos muy pronto!"
+              ],
+              voice: [
+                  { mood: 'Neutral',  text: "Hola, mi nombre es [tu nombre]. Esta es una grabación de voz con fines de clonación." },
+                  { mood: 'Cálido',   text: "Disfruto de las mañanas tranquilas con una buena taza de café." },
+                  { mood: 'Pregunta', text: "¿Alguna vez te has preguntado cómo sonaría tu propia voz en otro idioma?" },
+                  { mood: 'Entusiasmado', text: "¡La tecnología actual puede recrear una voz con increíble precisión en docenas de idiomas!" },
+                  { mood: 'Calma',    text: "Respira hondo. No hay prisa — habla como si charlaras con un buen amigo." },
+                  { mood: 'Serio',    text: "Lee cada línea con atención e intenta igualar el tono indicado al lado." },
+                  { mood: 'Cálido',   text: "Muchas gracias por tu tiempo — significa mucho para nuestro equipo." }
+              ] },
+            { code: 'pt', label: 'Português',   flag: '🇵🇹',
+              video: [
+                  "Olá! Meu nome é [seu nome] e hoje estou criando o meu próprio avatar digital.",
+                  "Estou falando com bastante energia porque é exatamente isso que o meu avatar vai refletir depois.",
+                  "Adoro trabalhar em coisas novas, conhecer pessoas interessantes e aprender algo todos os dias.",
+                  "Deixa eu te contar uma história rápida — no fim de semana passado experimentei algo totalmente novo.",
+                  "O que mais me surpreendeu foi como foi bom apenas começar sem ficar pensando demais.",
+                  "Me lembrou que pequenos experimentos quase sempre levam às maiores descobertas.",
+                  "Se você está assistindo e pensando em tentar algo novo — vai fundo. Você vai agradecer depois.",
+                  "Muito obrigado por dedicar um tempinho para assistir a esta breve apresentação.",
+                  "Espero que tenha um dia absolutamente maravilhoso, e a gente se vê em breve!"
+              ],
+              voice: [
+                  { mood: 'Neutro',   text: "Olá, meu nome é [seu nome]. Esta é uma gravação para fins de clonagem de voz." },
+                  { mood: 'Caloroso', text: "Eu realmente aprecio uma manhã tranquila com um bom café." },
+                  { mood: 'Pergunta', text: "Você já se perguntou como sua voz soaria em outro idioma?" },
+                  { mood: 'Animado',  text: "A tecnologia de hoje pode recriar uma voz com precisão impressionante em dezenas de idiomas!" },
+                  { mood: 'Calmo',    text: "Respire fundo. Sem pressa — fale como se estivesse conversando com um amigo próximo." },
+                  { mood: 'Sério',    text: "Leia cada linha com atenção e tente combinar com o tom indicado ao lado." },
+                  { mood: 'Caloroso', text: "Muito obrigado pelo seu tempo — significa muito para a nossa equipe." }
+              ] },
+            { code: 'fr', label: 'Français',    flag: '🇫🇷',
+              video: [
+                  "Bonjour ! Je m'appelle [votre nom] et aujourd'hui je crée mon propre avatar numérique.",
+                  "Je parle avec beaucoup d'énergie car c'est exactement ce que mon avatar va refléter ensuite.",
+                  "J'adore travailler sur des choses nouvelles, rencontrer des gens intéressants et apprendre chaque jour.",
+                  "Laissez-moi vous raconter une petite histoire — le week-end dernier j'ai essayé quelque chose de complètement nouveau.",
+                  "Ce qui m'a le plus surpris, c'est à quel point il était agréable de simplement commencer sans trop réfléchir.",
+                  "Cela m'a rappelé que les petites expériences mènent souvent aux plus grandes découvertes.",
+                  "Si vous regardez ceci et hésitez à essayer quelque chose de nouveau — lancez-vous. Vous me remercierez plus tard.",
+                  "Merci infiniment d'avoir pris le temps de regarder cette courte présentation aujourd'hui.",
+                  "Je vous souhaite une journée absolument magnifique, et à très bientôt !"
+              ],
+              voice: [
+                  { mood: 'Neutre',   text: "Bonjour, je m'appelle [votre nom]. Ceci est un enregistrement pour cloner ma voix." },
+                  { mood: 'Chaleureux', text: "J'aime vraiment les matins tranquilles avec une bonne tasse de café." },
+                  { mood: 'Question', text: "Vous êtes-vous déjà demandé à quoi ressemblerait votre voix dans une autre langue ?" },
+                  { mood: 'Enthousiaste', text: "La technologie d'aujourd'hui peut recréer une voix avec une précision incroyable dans des dizaines de langues !" },
+                  { mood: 'Calme',    text: "Respirez profondément. Pas de précipitation — parlez comme à un ami proche." },
+                  { mood: 'Sérieux',  text: "Veuillez lire chaque ligne attentivement et essayer de correspondre au ton indiqué." },
+                  { mood: 'Chaleureux', text: "Merci beaucoup pour votre temps — cela compte beaucoup pour notre équipe." }
+              ] },
+            { code: 'it', label: 'Italiano',    flag: '🇮🇹',
+              video: [
+                  "Ciao! Mi chiamo [il tuo nome] e oggi sto creando il mio avatar digitale personale.",
+                  "Sto parlando con tanta energia perché è esattamente ciò che il mio avatar rispecchierà dopo.",
+                  "Amo lavorare a cose nuove, conoscere persone interessanti e imparare qualcosa ogni singolo giorno.",
+                  "Lascia che ti racconti una breve storia — lo scorso weekend ho provato qualcosa di completamente nuovo.",
+                  "Quello che mi ha sorpreso di più è stato quanto fosse bello iniziare senza pensarci troppo.",
+                  "Mi ha ricordato che i piccoli esperimenti portano spesso alle scoperte più grandi.",
+                  "Se stai guardando questo video e stai pensando di provare qualcosa di nuovo — fallo. Ti ringrazierai dopo.",
+                  "Grazie davvero per aver dedicato un po' del tuo tempo a questa breve presentazione.",
+                  "Ti auguro una giornata assolutamente meravigliosa, e a presto!"
+              ],
+              voice: [
+                  { mood: 'Neutro',   text: "Ciao, mi chiamo [il tuo nome]. Questa è una registrazione per la clonazione vocale." },
+                  { mood: 'Caloroso', text: "Amo davvero le mattine tranquille con una buona tazza di caffè." },
+                  { mood: 'Domanda',  text: "Ti sei mai chiesto come suonerebbe la tua voce in un'altra lingua?" },
+                  { mood: 'Entusiasta', text: "La tecnologia di oggi può ricreare una voce con una precisione incredibile in decine di lingue!" },
+                  { mood: 'Calmo',    text: "Fai un respiro profondo. Niente fretta — parla come faresti con un caro amico." },
+                  { mood: 'Serio',    text: "Leggi attentamente ogni riga e cerca di rispettare il tono indicato a fianco." },
+                  { mood: 'Caloroso', text: "Grazie mille per il tuo tempo — significa molto per il nostro team." }
+              ] },
+            { code: 'ja', label: '日本語',       flag: '🇯🇵',
+              video: [
+                  "こんにちは! 私の名前は[あなたの名前]です。今日は自分のデジタルアバターを作っています。",
+                  "今、たっぷりのエネルギーで話しています。アバターも同じように生き生きと動いてくれるからです。",
+                  "新しいことに挑戦したり、面白い人に出会ったり、毎日何かを学ぶことが大好きです。",
+                  "ちょっとしたお話をさせてください — 先週末、まったく初めてのことに挑戦しました。",
+                  "一番驚いたのは、深く考えずに「とにかく始める」ことの気持ちよさでした。",
+                  "小さな挑戦こそが、いちばん大きな発見につながると改めて感じました。",
+                  "もしあなたも何か新しいことを始めたいと思っているなら — ぜひ一歩を踏み出してみてください。",
+                  "今日はお時間を取ってこの短い自己紹介を見てくださり、本当にありがとうございます。",
+                  "素敵な一日をお過ごしください — また近いうちにお会いしましょう!"
+              ],
+              voice: [
+                  { mood: 'ニュートラル', text: "こんにちは、私の名前は[あなたの名前]です。これは音声クローン用の録音です。" },
+                  { mood: '温かい', text: "私は静かな朝に淹れたてのコーヒーを楽しむ時間が大好きです。" },
+                  { mood: '質問', text: "自分の声が別の言語で話しているのを聞いたら、どんな気持ちになるか想像したことはありますか?" },
+                  { mood: '興奮', text: "今日の技術は、何十もの言語にわたって驚くほど正確に声を再現できます!" },
+                  { mood: '穏やか', text: "深呼吸をしてください。急ぐ必要はありません — 親しい友人と話すように話してください。" },
+                  { mood: '真剣', text: "各行を注意深く読み、横に表示されているトーンに合わせるようにしてください。" },
+                  { mood: '温かい', text: "お時間をいただきありがとうございます — チームにとって大きな意味があります。" }
+              ] },
+            { code: 'vi', label: 'Tiếng Việt',  flag: '🇻🇳',
+              video: [
+                  "Xin chào! Tên tôi là [tên của bạn] và hôm nay tôi đang tạo avatar kỹ thuật số của riêng mình.",
+                  "Tôi đang nói với rất nhiều năng lượng, vì đó chính xác là điều avatar sẽ phản chiếu sau này.",
+                  "Tôi thích làm những điều mới, gặp gỡ những người thú vị và học hỏi điều gì đó mỗi ngày.",
+                  "Để tôi kể một câu chuyện ngắn — cuối tuần trước tôi đã thử một điều hoàn toàn mới và hơi đáng sợ.",
+                  "Điều khiến tôi bất ngờ nhất là cảm giác tuyệt vời khi bắt đầu mà không cần suy nghĩ quá nhiều.",
+                  "Nó nhắc tôi rằng những thử nghiệm nhỏ thường dẫn đến những khám phá lớn nhất.",
+                  "Nếu bạn đang xem video này và phân vân thử điều gì đó mới — hãy làm đi. Sau này bạn sẽ cảm ơn chính mình.",
+                  "Cảm ơn bạn rất nhiều đã dành thời gian xem phần giới thiệu ngắn này hôm nay.",
+                  "Chúc bạn một ngày thật tuyệt vời, và hẹn gặp lại bạn rất sớm thôi!"
+              ],
+              voice: [
+                  { mood: 'Trung tính', text: "Xin chào, tên tôi là [tên của bạn]. Đây là bản ghi âm để nhân bản giọng nói." },
+                  { mood: 'Ấm áp', text: "Tôi thực sự thích những buổi sáng yên tĩnh với một tách cà phê thơm." },
+                  { mood: 'Câu hỏi', text: "Bạn đã bao giờ tự hỏi giọng nói của mình sẽ thế nào trong một ngôn ngữ khác chưa?" },
+                  { mood: 'Hào hứng', text: "Công nghệ ngày nay có thể tái tạo giọng nói với độ chính xác đáng kinh ngạc qua hàng chục ngôn ngữ!" },
+                  { mood: 'Bình tĩnh', text: "Hãy hít một hơi thật sâu. Không cần vội — hãy nói như đang trò chuyện với một người bạn thân." },
+                  { mood: 'Nghiêm túc', text: "Hãy đọc kỹ từng dòng và cố gắng khớp với tông đã được chỉ ra bên cạnh." },
+                  { mood: 'Ấm áp', text: "Cảm ơn bạn rất nhiều vì thời gian của bạn — điều đó có ý nghĩa lớn với cả nhóm chúng tôi." }
+              ] },
+            { code: 'th', label: 'ไทย',         flag: '🇹🇭',
+              video: [
+                  "สวัสดีครับ! ฉันชื่อ [ชื่อของคุณ] และวันนี้ฉันกำลังสร้างอวตารดิจิทัลของตัวเอง",
+                  "ฉันกำลังพูดด้วยพลังเต็มที่ เพราะนั่นคือสิ่งที่อวตารจะสะท้อนออกมาในภายหลัง",
+                  "ฉันชอบทำสิ่งใหม่ ๆ ได้พบผู้คนที่น่าสนใจ และเรียนรู้สิ่งใหม่ในทุก ๆ วัน",
+                  "ให้ฉันเล่าเรื่องสั้น ๆ — สุดสัปดาห์ที่แล้วฉันได้ลองทำสิ่งที่ไม่เคยทำมาก่อนเลย",
+                  "สิ่งที่ทำให้ฉันประหลาดใจที่สุดคือ ความรู้สึกดีจากการลงมือทำโดยไม่ต้องคิดมากเกินไป",
+                  "มันทำให้ฉันตระหนักว่า การทดลองเล็ก ๆ มักนำไปสู่การค้นพบที่ยิ่งใหญ่ที่สุด",
+                  "ถ้าคุณกำลังดูสิ่งนี้และลังเลที่จะลองสิ่งใหม่ — ลงมือเลยครับ คุณจะขอบคุณตัวเองในภายหลัง",
+                  "ขอบคุณมากที่สละเวลามาดูการแนะนำตัวสั้น ๆ นี้ในวันนี้",
+                  "ขอให้คุณมีวันที่ยอดเยี่ยมที่สุด แล้วเจอกันเร็ว ๆ นี้นะครับ!"
+              ],
+              voice: [
+                  { mood: 'เป็นกลาง', text: "สวัสดี ฉันชื่อ [ชื่อของคุณ] นี่คือการบันทึกเสียงเพื่อใช้ในการโคลนเสียง" },
+                  { mood: 'อบอุ่น', text: "ฉันชอบเช้าที่เงียบสงบกับกาแฟดี ๆ สักถ้วยจริง ๆ" },
+                  { mood: 'คำถาม', text: "คุณเคยสงสัยไหมว่าเสียงของคุณจะเป็นอย่างไรในภาษาอื่น?" },
+                  { mood: 'ตื่นเต้น', text: "เทคโนโลยีในปัจจุบันสามารถจำลองเสียงได้แม่นยำอย่างน่าทึ่งในหลายสิบภาษา!" },
+                  { mood: 'สงบ', text: "หายใจเข้าลึก ๆ ไม่ต้องรีบ — พูดราวกับว่ากำลังคุยกับเพื่อนสนิท" },
+                  { mood: 'จริงจัง', text: "กรุณาอ่านแต่ละบรรทัดอย่างระมัดระวังและพยายามจับคู่กับโทนเสียงที่กำกับไว้" },
+                  { mood: 'อบอุ่น', text: "ขอบคุณมากสำหรับเวลาของคุณ — มันมีความหมายมากสำหรับทีมของเรา" }
+              ] },
+            { code: 'de', label: 'Deutsch',     flag: '🇩🇪',
+              video: [
+                  "Hallo! Mein Name ist [Ihr Name] und heute erstelle ich meinen eigenen digitalen Avatar.",
+                  "Ich spreche mit viel Energie, denn genau das wird mein Avatar später widerspiegeln.",
+                  "Ich liebe es, an neuen Dingen zu arbeiten, interessante Menschen zu treffen und jeden Tag etwas Neues zu lernen.",
+                  "Lass mich eine kurze Geschichte erzählen — letztes Wochenende habe ich etwas völlig Neues ausprobiert.",
+                  "Was mich am meisten überrascht hat, war wie gut es sich anfühlte, einfach anzufangen ohne zu viel nachzudenken.",
+                  "Es hat mich daran erinnert, dass kleine Experimente oft zu den größten Entdeckungen führen.",
+                  "Wenn ihr das anschaut und überlegt, etwas Neues zu versuchen — fangt einfach an. Ihr werdet euch später danken.",
+                  "Vielen Dank, dass ihr euch heute die Zeit für diese kurze Vorstellung genommen habt.",
+                  "Ich wünsche euch einen absolut wundervollen Tag — wir sehen uns sehr bald wieder!"
+              ],
+              voice: [
+                  { mood: 'Neutral',  text: "Hallo, mein Name ist [Ihr Name]. Dies ist eine Sprachaufnahme zum Klonen der Stimme." },
+                  { mood: 'Herzlich', text: "Ich genieße ruhige Morgen mit einer guten Tasse Kaffee wirklich." },
+                  { mood: 'Frage',    text: "Haben Sie sich schon einmal gefragt, wie sich Ihre Stimme in einer anderen Sprache anhören würde?" },
+                  { mood: 'Begeistert', text: "Die heutige Technologie kann eine Stimme mit erstaunlicher Genauigkeit in Dutzenden von Sprachen nachbilden!" },
+                  { mood: 'Ruhig',    text: "Atmen Sie tief durch. Keine Eile — sprechen Sie, als würden Sie mit einem guten Freund plaudern." },
+                  { mood: 'Ernst',    text: "Bitte lesen Sie jede Zeile sorgfältig und versuchen Sie, den daneben angegebenen Ton zu treffen." },
+                  { mood: 'Herzlich', text: "Vielen Dank für Ihre Zeit — sie bedeutet unserem Team viel." }
+              ] },
+        ];
+
+        const state = {
+            currentStep: 1,
+            mode: 'webcam',          // 'webcam' | 'phone' | 'upload'
+            language: 'en',
+            files: [],               // File objects to send
+            recordedVideo: null,     // {blob, durationSec}
+            recordedAudio: null,     // {blob, durationSec}
+            driveLink: '',
+            camStream: null,
+            camRecorder: null,
+            camStartedAt: 0,
+            camTimer: null,
+            audioCtx: null,
+            audioAnalyser: null,
+            audioRaf: null,
+            voiceRecorder: null,
+            voiceStream: null,
+            voiceStartedAt: 0,
+            voiceTimer: null,
+            currentTeleLine: 0,
+            fsLineIdx: 0,
+            aspect: 'landscape',
+            deviceIds: { camera: '', mic: '' },
+        };
+
+        const $ = (sel, root) => (root || document).querySelector(sel);
+        const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+        function notify(text, kind) {
+            // We rely on alert blocks on each step + the toast pattern below.
+            console[kind === 'error' ? 'error' : 'log']('[setup]', text);
+        }
+
+        /* ═══════════ Step navigation ═══════════ */
+        function goToStep(n) {
+            state.currentStep = n;
+            $$('.step-card').forEach(c => c.hidden = (parseInt(c.dataset.card, 10) !== n));
+            $$('#stepper .step').forEach(s => {
+                const sn = parseInt(s.dataset.step, 10);
+                s.classList.toggle('is-current', sn === n);
+                s.classList.toggle('is-done', sn < n);
+            });
+            $$('#stepper .step-bar').forEach((b, i) => {
+                b.classList.toggle('is-done', i + 1 < n);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (n === 2) initStep2();
+            if (n === 3) initStep3();
+            if (n === 4) renderReview();
+            if (n !== 2) stopWebcam();
+            if (n !== 3) stopVoice();
+        }
+        $$('[data-go]').forEach(b => b.addEventListener('click', () => goToStep(parseInt(b.dataset.go, 10))));
+
+        /* ═══════════ Language picker ═══════════ */
+        function renderLangPop() {
+            const pop = $('#langPop');
+            pop.innerHTML = LANGUAGES.map(l => `
+                <button type="button" data-code="${l.code}" class="${l.code === state.language ? 'is-active' : ''}">
+                    <span><span style="margin-right:8px;">${l.flag}</span>${l.label}</span>
+                    <i class="check fa-solid fa-check"></i>
+                </button>
+            `).join('');
+            pop.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+                state.language = b.dataset.code;
+                const lang = LANGUAGES.find(l => l.code === state.language);
+                $('#langLabel').textContent = lang.label;
+                $('#voiceLangName').textContent = lang.label;
+                if ($('#camFs')?.classList.contains('is-on')) renderFsTeleprompter();
+                renderVoiceScript();
+                pop.classList.remove('is-open');
+                renderLangPop();
+            }));
+        }
+        $('#langTrigger').addEventListener('click', e => {
+            e.stopPropagation();
+            $('#langPop').classList.toggle('is-open');
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.lang-select')) $('#langPop').classList.remove('is-open');
+        });
+
+        /* ═══════════ Step 2 — Mode tabs ═══════════ */
+        function initStep2() {
+            renderLangPop();
+            switchMode(state.mode);
+        }
+
+        function switchMode(mode) {
+            state.mode = mode;
+            $$('#card-2 .mode-tab').forEach(b => b.classList.toggle('is-active', b.dataset.mode === mode));
+            $$('#card-2 [data-pane]').forEach(p => p.hidden = (p.dataset.pane !== mode));
+            $('#langPickWrap').style.display = (mode === 'webcam') ? 'inline-flex' : 'none';
+            updateStep2Actions();
+            if (mode === 'webcam') {
+                bindDevicePickers();
+                ensureWebcamPreview();
+            } else stopWebcam();
+            if (mode === 'phone') ensurePhoneQR();
+            if (mode === 'upload') renderFilesList();
+        }
+        $$('#card-2 .mode-tab').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode)));
+        $('#jumpToUploadLink').addEventListener('click', e => { e.preventDefault(); switchMode('upload'); });
+
+        function updateStep2Actions() {
+            const host = $('#step2Actions');
+            host.innerHTML = '';
+            if (state.mode === 'webcam') {
+                const recordedOk = state.recordedVideo;
+                if (recordedOk) {
+                    host.innerHTML = `
+                        <button type="button" class="btn btn-secondary" id="recRetake">
+                            <i class="fa-solid fa-rotate-left"></i> Retake
+                        </button>
+                        <button type="button" class="btn btn-primary" id="recContinue">
+                            Use this take <i class="fa-solid fa-arrow-right"></i>
+                        </button>`;
+                    $('#recRetake').addEventListener('click', () => {
+                        state.recordedVideo = null;
+                        $('#camOverlayBig').textContent = '📹';
+                        $('#camOverlay').style.display = '';
+                        $('#camOverlay').style.background = '';
+                        $('#camState').classList.remove('is-rec');
+                        $('#camStateLabel').textContent = 'Connecting…';
+                        ensureWebcamPreview();
+                        updateStep2Actions();
+                    });
+                    $('#recContinue').addEventListener('click', () => goToStep(3));
+                } else {
+                    host.innerHTML = `
+                        <button type="button" class="btn btn-primary" id="recStartBtn" disabled>
+                            <i class="fa-solid fa-circle" style="color:#ef4444;"></i> I'm ready
+                        </button>`;
+                    $('#recStartBtn').addEventListener('click', openRecIntroModal);
+                }
+            } else if (state.mode === 'phone') {
+                host.innerHTML = `
+                    <button type="button" class="btn btn-primary" id="phoneContinue">
+                        I've finished on my phone <i class="fa-solid fa-arrow-right"></i>
+                    </button>`;
+                $('#phoneContinue').addEventListener('click', () => goToStep(3));
+            } else if (state.mode === 'upload') {
+                const ok = state.files.length > 0 || state.driveLink.trim().length > 0;
+                host.innerHTML = `
+                    <button type="button" class="btn btn-primary" id="uploadContinue" ${ok ? '' : 'disabled'}>
+                        Continue <i class="fa-solid fa-arrow-right"></i>
+                    </button>`;
+                $('#uploadContinue').addEventListener('click', () => goToStep(3));
+            }
+        }
+
+        /* ═══════════ Webcam ═══════════ */
+        // state.deviceIds = { camera, mic }; state.aspect = 'landscape' | 'portrait'
+        state.deviceIds = state.deviceIds || { camera: '', mic: '' };
+        state.aspect    = state.aspect    || 'landscape';
+
+        async function ensureWebcamPreview(force) {
+            if (state.camStream && !force) {
+                refreshDeviceList(); // keep dropdowns fresh
+                return;
+            }
+            // Tear down a previous stream if forcing reacquire.
+            if (state.camStream) stopWebcamMedia(/* keepVideoEl */ true);
+
+            const overlay = $('#camOverlay');
+            const stateBadge = $('#camState');
+            const label = $('#camStateLabel');
+            const meter = $('#camMicMeter');
+            const camWrap = $('#camWrap');
+            try {
+                label.textContent = 'Connecting…';
+                stateBadge.classList.remove('is-rec');
+                camWrap.classList.toggle('aspect-portrait', state.aspect === 'portrait');
+
+                const want = state.aspect === 'portrait'
+                    ? { width: { ideal: 1080 }, height: { ideal: 1920 } }
+                    : { width: { ideal: 1920 }, height: { ideal: 1080 } };
+                const videoConstraints = {
+                    ...want,
+                    facingMode: 'user',
+                };
+                if (state.deviceIds.camera) videoConstraints.deviceId = { exact: state.deviceIds.camera };
+
+                const audioConstraints = state.deviceIds.mic
+                    ? { deviceId: { exact: state.deviceIds.mic } }
+                    : true;
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: videoConstraints,
+                    audio: audioConstraints,
+                });
+                state.camStream = stream;
+                const video = $('#camPreview');
+                video.srcObject = stream;
+                overlay.style.display = 'none';
+                stateBadge.style.display = '';
+                label.textContent = 'Preview';
+                meter.hidden = false;
+                startMicMeter(stream);
+                const startBtn = $('#recStartBtn');
+                if (startBtn) startBtn.disabled = false;
+                await refreshDeviceList();
+            } catch (err) {
+                console.error('[webcam] getUserMedia failed', err);
+                overlay.style.display = '';
+                overlay.innerHTML = `
+                    <div style="max-width:340px;">
+                        <div style="font-size:48px; margin-bottom:8px;">🎥</div>
+                        <div style="font-weight:700; font-size:17px;">Device not authorized</div>
+                        <div style="font-size:13px; opacity:.9; margin-top:6px;">
+                            Please allow camera and microphone access in your browser, then refresh the page.<br>
+                            <span style="opacity:.7;">Error: ${err.name || 'NotAllowedError'}</span>
+                        </div>
+                        <div style="margin-top:10px;">
+                            <a href="#" id="troubleshootLink" style="color:white; font-weight:700; text-decoration:underline;">Troubleshooting</a>
+                        </div>
+                    </div>`;
+                document.getElementById('troubleshootLink')?.addEventListener('click', e => {
+                    e.preventDefault();
+                    window.open('https://support.google.com/chrome/answer/2693767', '_blank');
+                });
+                stateBadge.style.display = 'none';
+            }
+        }
+
+        async function refreshDeviceList() {
+            if (!navigator.mediaDevices?.enumerateDevices) return;
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const cams  = devices.filter(d => d.kind === 'videoinput');
+                const mics  = devices.filter(d => d.kind === 'audioinput');
+                const camSel = $('#pickCamera');
+                const micSel = $('#pickMic');
+                if (camSel) {
+                    const cur = state.deviceIds.camera || (state.camStream?.getVideoTracks()[0]?.getSettings()?.deviceId) || '';
+                    camSel.innerHTML = cams.length
+                        ? cams.map(d => `<option value="${d.deviceId}">${escapeHtml(d.label || ('Camera ' + (d.deviceId||'').slice(0,4)))}</option>`).join('')
+                        : '<option value="">Default camera</option>';
+                    if (cur && cams.some(d => d.deviceId === cur)) camSel.value = cur;
+                }
+                if (micSel) {
+                    const cur = state.deviceIds.mic || (state.camStream?.getAudioTracks()[0]?.getSettings()?.deviceId) || '';
+                    micSel.innerHTML = mics.length
+                        ? mics.map(d => `<option value="${d.deviceId}">${escapeHtml(d.label || ('Microphone ' + (d.deviceId||'').slice(0,4)))}</option>`).join('')
+                        : '<option value="">Default microphone</option>';
+                    if (cur && mics.some(d => d.deviceId === cur)) micSel.value = cur;
+                }
+            } catch (e) { console.warn('enumerateDevices', e); }
+        }
+
+        function bindDevicePickers() {
+            const aspect = $('#pickAspect');
+            const cam    = $('#pickCamera');
+            const mic    = $('#pickMic');
+            if (aspect && !aspect._bound) {
+                aspect._bound = true;
+                aspect.value = state.aspect;
+                aspect.addEventListener('change', () => {
+                    state.aspect = aspect.value;
+                    ensureWebcamPreview(true);
+                });
+            }
+            if (cam && !cam._bound) {
+                cam._bound = true;
+                cam.addEventListener('change', () => {
+                    state.deviceIds.camera = cam.value;
+                    ensureWebcamPreview(true);
+                });
+            }
+            if (mic && !mic._bound) {
+                mic._bound = true;
+                mic.addEventListener('change', () => {
+                    state.deviceIds.mic = mic.value;
+                    ensureWebcamPreview(true);
+                });
+            }
+        }
+
+        function startMicMeter(stream) {
+            try {
+                if (state.audioRaf) cancelAnimationFrame(state.audioRaf);
+                if (state.audioCtx) { try { state.audioCtx.close(); } catch (_) {} }
+                state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const src = state.audioCtx.createMediaStreamSource(stream);
+                state.audioAnalyser = state.audioCtx.createAnalyser();
+                state.audioAnalyser.fftSize = 256;
+                src.connect(state.audioAnalyser);
+                const arr = new Uint8Array(state.audioAnalyser.frequencyBinCount);
+                const bar = $('#camMicMeter span');
+                const tick = () => {
+                    state.audioAnalyser.getByteFrequencyData(arr);
+                    const avg = arr.reduce((s, x) => s + x, 0) / arr.length;
+                    if (bar) bar.style.width = Math.min(100, (avg / 110) * 100) + '%';
+                    state.audioRaf = requestAnimationFrame(tick);
+                };
+                tick();
+            } catch (e) { console.warn('mic meter', e); }
+        }
+
+        /* ── Intro modal ─────────────────────────────────────────── */
+        function openRecIntroModal() {
+            if (!state.camStream) return;
+            const shade = $('#recIntroShade');
+            shade.classList.add('is-on');
+            const close = () => shade.classList.remove('is-on');
+            $('#recIntroClose').onclick = close;
+            shade.onclick = e => { if (e.target === shade) close(); };
+            $('#recIntroStart').onclick = () => {
+                close();
+                startWebcamRecording();
+            };
+            document.addEventListener('keydown', escClose);
+            function escClose(e) {
+                if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escClose); }
+            }
+        }
+
+        /* ── Fullscreen recording ────────────────────────────────── */
+        async function startWebcamRecording() {
+            if (!state.camStream) return;
+
+            // Mirror the stream into the fullscreen <video>.
+            const fs = $('#camFs');
+            const fsVideo = $('#camFsVideo');
+            fsVideo.srcObject = state.camStream;
+            fs.classList.add('is-on');
+            document.body.style.overflow = 'hidden';
+            renderFsTeleprompter();
+
+            // Allow bail-out during countdown.
+            state.recCancelled = false;
+            $('#camFsClose').onclick = () => {
+                state.recCancelled = true;
+                if (state.countdownAbort) state.countdownAbort();
+                if (state.fsAdvanceTimer) { clearTimeout(state.fsAdvanceTimer); state.fsAdvanceTimer = null; }
+                if (state.camRecorder && state.camRecorder.state !== 'inactive') {
+                    try { state.camRecorder.stop(); } catch (_) {}
+                }
+                exitFullscreen();
+                $('#camState').classList.remove('is-rec');
+                $('#camStateLabel').textContent = 'Preview';
+                updateStep2Actions();
+            };
+
+            // 3-2-1 countdown for a polished entrance.
+            await runCountdown(3);
+            if (state.recCancelled) return;
+
+            const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+                .find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+            const chunks = [];
+            const rec = new MediaRecorder(state.camStream, { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+            rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+            rec.onstop = () => {
+                clearInterval(state.camTimer); state.camTimer = null;
+                if (state.fsAdvanceTimer) { clearTimeout(state.fsAdvanceTimer); state.fsAdvanceTimer = null; }
+                if (state.recCancelled) {
+                    state.recCancelled = false;
+                    state.camRecorder = null;
+                    return; // camera stream preserved, user can record again
+                }
+                const durSec = Math.round((Date.now() - state.camStartedAt) / 1000);
+                if (durSec < 90) {
+                    exitFullscreen();
+                    alert(`The recording must be at least 1:30. Yours was only ${Math.floor(durSec/60)}:${String(durSec%60).padStart(2,'0')}. Please try again.`);
+                    state.camRecorder = null;
+                    $('#camState').classList.remove('is-rec');
+                    $('#camStateLabel').textContent = 'Preview';
+                    return;
+                }
+                const blob = new Blob(chunks, { type: mime });
+                state.recordedVideo = {
+                    blob,
+                    durationSec: Math.round((Date.now() - state.camStartedAt) / 1000),
+                    mime,
+                };
+                exitFullscreen();
+                $('#camOverlayBig').textContent = '✓';
+                $('#camOverlay').style.display = '';
+                $('#camOverlay').style.background = 'linear-gradient(180deg, rgba(16,185,129,.85), rgba(5,150,105,.85))';
+                $('#camState').classList.remove('is-rec');
+                $('#camStateLabel').textContent = 'Recorded';
+                stopWebcamMedia();
+                updateStep2Actions();
+            };
+            rec.start(500);
+            state.camRecorder = rec;
+            state.camStartedAt = Date.now();
+
+            const MIN_SEC = 90;   // 1:30 minimum
+            const MAX_SEC = 120;  // 2:00 maximum
+            const prog = $('#camFsProgress');
+            const fill = $('#camFsFill');
+            const minMark = $('#camFsMinMark');
+            const stopBtn = $('#camFsStop');
+            const hint = $('#camFsHint');
+            // Place the min mark at MIN_SEC / MAX_SEC % of the bar.
+            minMark.style.left = `${(MIN_SEC / MAX_SEC) * 100}%`;
+            prog.classList.remove('is-ok');
+            stopBtn.disabled = true;
+
+            const lang = LANGUAGES.find(l => l.code === state.language);
+            scheduleNextTeleAdvance(lang); // word-based advancing
+
+            state.camTimer = setInterval(() => {
+                const sec = Math.floor((Date.now() - state.camStartedAt) / 1000);
+                $('#camFsTime').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
+                fill.style.width = Math.min(100, (sec / MAX_SEC) * 100) + '%';
+                if (sec >= MIN_SEC && stopBtn.disabled) {
+                    stopBtn.disabled = false;
+                    prog.classList.add('is-ok');
+                    hint.textContent = 'Looks good — finish whenever you\'re ready';
+                } else if (sec < MIN_SEC) {
+                    const remain = MIN_SEC - sec;
+                    hint.textContent = `Keep going — ${remain}s until minimum length`;
+                }
+                if (sec >= MAX_SEC) {
+                    hint.textContent = 'Maximum length reached';
+                    stopWebcamRecording();
+                }
+            }, 250);
+
+            $('#camFsStop').onclick = () => {
+                if ($('#camFsStop').disabled) return;
+                stopWebcamRecording();
+            };
+            $('#camState').classList.add('is-rec');
+            $('#camStateLabel').textContent = 'REC';
+        }
+
+        function scheduleNextTeleAdvance(lang) {
+            if (state.fsAdvanceTimer) { clearTimeout(state.fsAdvanceTimer); state.fsAdvanceTimer = null; }
+            const idx = state.fsLineIdx || 0;
+            const line = lang.video[idx] || '';
+            const words = Math.max(1, line.trim().split(/\s+/).length);
+            // ~2.6 words/sec for a natural pace; 1.6s extra buffer between lines.
+            const delay = Math.max(4500, Math.round(words * 380 + 1600));
+            state.fsAdvanceTimer = setTimeout(() => {
+                if (state.fsLineIdx >= lang.video.length - 1) return;
+                advanceFsTele();
+                scheduleNextTeleAdvance(lang);
+            }, delay);
+        }
+
+        function runCountdown(secs) {
+            return new Promise(res => {
+                const wrap = $('#camFsCountdown');
+                const num  = $('#camFsCountdownNum');
+                wrap.classList.add('is-on');
+                let n = secs;
+                num.textContent = n;
+                const id = setInterval(() => {
+                    n -= 1;
+                    if (n <= 0) {
+                        clearInterval(id);
+                        wrap.classList.remove('is-on');
+                        state.countdownAbort = null;
+                        res();
+                    } else {
+                        num.textContent = n;
+                    }
+                }, 800);
+                state.countdownAbort = () => {
+                    clearInterval(id);
+                    wrap.classList.remove('is-on');
+                    state.countdownAbort = null;
+                    res();
+                };
+            });
+        }
+
+        function stopWebcamRecording() {
+            if (!state.camRecorder || state.camRecorder.state === 'inactive') return;
+            try { state.camRecorder.stop(); } catch (_e) {}
+            clearInterval(state.camTimer); state.camTimer = null;
+        }
+
+        function exitFullscreen() {
+            const fs = $('#camFs');
+            fs.classList.remove('is-on');
+            document.body.style.overflow = '';
+            const fsVideo = $('#camFsVideo');
+            fsVideo.srcObject = null;
+        }
+
+        function stopWebcamMedia(keepVideoEl) {
+            if (state.audioRaf) cancelAnimationFrame(state.audioRaf); state.audioRaf = null;
+            try { state.audioCtx && state.audioCtx.close(); } catch (_e) {}
+            state.audioCtx = null; state.audioAnalyser = null;
+            if (state.camStream) {
+                state.camStream.getTracks().forEach(t => t.stop());
+                state.camStream = null;
+            }
+            if (!keepVideoEl) $('#camPreview').srcObject = null;
+        }
+        function stopWebcam() {
+            stopWebcamRecording();
+            stopWebcamMedia();
+        }
+
+        /* Fullscreen teleprompter — current line on top, auto-scrolls, word-paced. */
+        function renderFsTeleprompter() {
+            const lang = LANGUAGES.find(l => l.code === state.language);
+            const host = $('#camFsTele');
+            if (!host) return;
+            state.fsLineIdx = 0;
+            host.innerHTML = lang.video.map((line, i) =>
+                `<div class="tele-line ${i === 0 ? 'is-now' : ''}" data-i="${i}">${escapeHtml(line)}</div>`
+            ).join('');
+            host.scrollTop = 0;
+        }
+        function advanceFsTele() {
+            const host = $('#camFsTele');
+            if (!host) return;
+            const lines = host.querySelectorAll('.tele-line');
+            state.fsLineIdx = Math.min((state.fsLineIdx || 0) + 1, lines.length - 1);
+            lines.forEach((el, i) => {
+                el.classList.toggle('is-now',  i === state.fsLineIdx);
+                el.classList.toggle('is-past', i <  state.fsLineIdx);
+            });
+            const cur = lines[state.fsLineIdx];
+            if (cur) {
+                const hostTop = host.getBoundingClientRect().top;
+                const lineTop = cur.getBoundingClientRect().top;
+                host.scrollBy({ top: lineTop - hostTop - 6, behavior: 'smooth' });
+            }
+        }
+
+        /* ═══════════ Phone QR ═══════════ */
+        function ensurePhoneQR() {
+            const url = PUBLIC_URL + '?via=phone';
+            $('#phoneURL').textContent = url;
+            // QR image is server-rendered via /setup/<token>/qr.svg — already in <img>.
+            const copyBtn = $('#copyPhoneURL');
+            if (copyBtn && !copyBtn._bound) {
+                copyBtn._bound = true;
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy link';
+                        }, 1800);
+                    } catch (_e) {
+                        prompt('Copy this link:', url);
+                    }
+                });
+            }
+        }
+
+        /* ═══════════ Upload pane ═══════════ */
+        const drop       = $('#drop');
+        const filesInput = $('#filesInput');
+        const driveLink  = $('#driveLink');
+
+        driveLink?.addEventListener('input', () => {
+            state.driveLink = driveLink.value;
+            updateStep2Actions();
+        });
+        filesInput?.addEventListener('change', e => acceptFiles(e.target.files));
+
+        ['dragenter', 'dragover'].forEach(ev => drop?.addEventListener(ev, e => {
+            e.preventDefault(); drop.classList.add('is-drag');
+        }));
+        ['dragleave', 'drop'].forEach(ev => drop?.addEventListener(ev, e => {
+            e.preventDefault(); drop.classList.remove('is-drag');
+        }));
+        drop?.addEventListener('drop', e => {
+            if (e.dataTransfer && e.dataTransfer.files) acceptFiles(e.dataTransfer.files);
+        });
+
+        function acceptFiles(fl) {
+            const rejected = [];
+            for (const f of Array.from(fl || [])) {
+                if (state.files.length >= MAX_FILES) { rejected.push(f.name); continue; }
+                if (f.size > MAX_BYTES) { rejected.push(`${f.name} (too large)`); continue; }
+                const ext = (f.name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+                const mimeOk = (f.type || '').startsWith('video/') || (f.type || '').startsWith('audio/');
+                if (!mimeOk && !ALLOWED_EXT.has(ext)) { rejected.push(`${f.name} (unsupported)`); continue; }
+                state.files.push(f);
+            }
+            renderFilesList();
+            updateStep2Actions();
+            if (rejected.length) console.warn('Rejected:', rejected);
+        }
+        function renderFilesList() {
+            const host = $('#filesList');
+            if (!host) return;
+            if (!state.files.length) { host.innerHTML = ''; return; }
+            host.innerHTML = state.files.map((f, i) => `
+                <div class="file-row">
+                    <div class="ft-icon"><i class="fa-solid ${(/(mp3|wav|m4a|aac|flac|ogg)$/i.test(f.name) ? 'fa-music' : 'fa-film')}"></i></div>
+                    <div>
+                        <div class="ft-name">${escapeHtml(f.name)}</div>
+                        <div class="ft-size">${fmtBytes(f.size)}</div>
+                    </div>
+                    <div></div>
+                    <button type="button" class="ft-remove" data-i="${i}"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('');
+            host.querySelectorAll('.ft-remove').forEach(b => b.addEventListener('click', () => {
+                state.files.splice(parseInt(b.dataset.i, 10), 1);
+                renderFilesList();
+                updateStep2Actions();
+            }));
+        }
+
+        /* ═══════════ Step 3 — Voice ═══════════ */
+        function initStep3() {
+            renderVoiceWave();
+            renderVoiceScript();
+        }
+        function renderVoiceWave() {
+            const wave = $('#voiceWave');
+            wave.innerHTML = '';
+            for (let i = 0; i < 36; i++) {
+                const s = document.createElement('span');
+                s.style.height = (8 + Math.sin(i / 3) * 6) + 'px';
+                wave.appendChild(s);
+            }
+        }
+        function renderVoiceScript() {
+            const lang = LANGUAGES.find(l => l.code === state.language);
+            const host = $('#voiceTele');
+            const tone = mood => `<span style="display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:rgba(99,102,241,.12);color:var(--brand-2);margin-right:6px;vertical-align:middle;">${escapeHtml(mood)}</span>`;
+            host.innerHTML = lang.voice.map((l, i) =>
+                `<div class="tele-line" data-i="${i}">${tone(l.mood)}${escapeHtml(l.text)}</div>`
+            ).join('');
+        }
+
+        $('#voiceMic').addEventListener('click', toggleVoiceRecording);
+        $('#voiceSkip').addEventListener('click', () => {
+            state.recordedAudio = null;
+            $('#voicePlayback').style.display = 'none';
+            goToStep(4);
+        });
+
+        async function toggleVoiceRecording() {
+            if (state.voiceRecorder && state.voiceRecorder.state === 'recording') {
+                state.voiceRecorder.stop();
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                state.voiceStream = stream;
+                const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
+                    .find(m => MediaRecorder.isTypeSupported(m)) || 'audio/webm';
+                const chunks = [];
+                const rec = new MediaRecorder(stream, { mimeType: mime });
+                rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+                rec.onstop = () => {
+                    const blob = new Blob(chunks, { type: mime });
+                    state.recordedAudio = {
+                        blob, mime,
+                        durationSec: Math.round((Date.now() - state.voiceStartedAt) / 1000),
+                    };
+                    const url = URL.createObjectURL(blob);
+                    const player = $('#voicePlayback');
+                    player.src = url; player.style.display = 'block';
+                    $('#voiceMic').classList.remove('is-rec');
+                    $('#voiceMic').innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+                    $('#voiceWave').classList.remove('is-rec');
+                    clearInterval(state.voiceTimer);
+                    stopVoiceMedia();
+                };
+                rec.start(250);
+                state.voiceRecorder = rec;
+                state.voiceStartedAt = Date.now();
+                $('#voiceMic').classList.add('is-rec');
+                $('#voiceMic').innerHTML = '<i class="fa-solid fa-stop"></i>';
+                $('#voiceWave').classList.add('is-rec');
+                animateVoiceWave(stream);
+                state.voiceTimer = setInterval(() => {
+                    const sec = Math.floor((Date.now() - state.voiceStartedAt) / 1000);
+                    $('#voiceTime').textContent =
+                        String(Math.floor(sec/60)) + ':' + String(sec%60).padStart(2,'0');
+                    if (sec >= 180) rec.stop();   // 3-min cap
+                }, 250);
+            } catch (err) {
+                alert('Microphone access denied. Please allow microphone access in your browser settings.');
+            }
+        }
+
+        function animateVoiceWave(stream) {
+            try {
+                state.audioCtx = state.audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                const src = state.audioCtx.createMediaStreamSource(stream);
+                state.audioAnalyser = state.audioCtx.createAnalyser();
+                state.audioAnalyser.fftSize = 64;
+                src.connect(state.audioAnalyser);
+                const bars = $$('#voiceWave span');
+                const arr = new Uint8Array(state.audioAnalyser.frequencyBinCount);
+                const tick = () => {
+                    state.audioAnalyser.getByteFrequencyData(arr);
+                    bars.forEach((b, i) => {
+                        const v = arr[i % arr.length] || 0;
+                        b.style.height = Math.max(6, (v / 255) * 80) + 'px';
+                    });
+                    state.audioRaf = requestAnimationFrame(tick);
+                };
+                tick();
+            } catch (e) { console.warn('voice wave', e); }
+        }
+        function stopVoiceMedia() {
+            if (state.audioRaf) cancelAnimationFrame(state.audioRaf); state.audioRaf = null;
+            try { state.audioCtx && state.audioCtx.close(); } catch (_e) {}
+            state.audioCtx = null; state.audioAnalyser = null;
+            if (state.voiceStream) {
+                state.voiceStream.getTracks().forEach(t => t.stop());
+                state.voiceStream = null;
+            }
+        }
+        function stopVoice() {
+            try { state.voiceRecorder && state.voiceRecorder.state === 'recording' && state.voiceRecorder.stop(); } catch (_e) {}
+            clearInterval(state.voiceTimer); state.voiceTimer = null;
+            stopVoiceMedia();
+        }
+
+        /* ═══════════ Step 4 — Review ═══════════ */
+        function renderReview() {
+            const lang = LANGUAGES.find(l => l.code === state.language);
+            const items = [];
+            if (state.recordedVideo) {
+                items.push({
+                    title: 'Webcam recording',
+                    sub: `${state.recordedVideo.durationSec}s · ${fmtBytes(state.recordedVideo.blob.size)} · ${state.recordedVideo.mime}`,
+                    icon: 'video', ok: true,
+                });
+            }
+            state.files.forEach(f => items.push({
+                title: f.name, sub: fmtBytes(f.size), icon: /(mp3|wav|m4a)$/i.test(f.name) ? 'music' : 'film', ok: true,
+            }));
+            if (state.driveLink.trim()) items.push({
+                title: 'Google Drive link', sub: state.driveLink.trim(), icon: 'link', ok: true,
+            });
+            if (state.recordedAudio) items.push({
+                title: 'Voice sample',
+                sub: `${state.recordedAudio.durationSec}s · ${fmtBytes(state.recordedAudio.blob.size)} · ${state.recordedAudio.mime}`,
+                icon: 'microphone', ok: true,
+            });
+            items.push({
+                title: 'Recording language',
+                sub: `${lang.flag} ${lang.label}`,
+                icon: 'globe',
+            });
+
+            const host = $('#reviewGrid');
+            host.innerHTML = items.map(it => `
+                <div class="review-item ${it.ok ? 'ok' : ''}">
+                    <div class="ri-icon"><i class="fa-solid fa-${it.icon}"></i></div>
+                    <div>
+                        <div class="ri-title">${escapeHtml(it.title)}</div>
+                        <div class="ri-sub">${escapeHtml(it.sub)}</div>
+                    </div>
+                    <div></div>
+                </div>
+            `).join('');
+
+            const hasAny = state.recordedVideo || state.files.length > 0 || state.driveLink.trim().length > 0;
+            const submit = $('#submitBtn');
+            submit.disabled = !hasAny;
+            const alertEl = $('#reviewAlert');
+            if (!hasAny) {
+                alertEl.hidden = false;
+                alertEl.className = 'alert alert-danger';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i><div>You need to record or upload at least one video, or paste a Drive link, before submitting.</div>';
+            } else {
+                alertEl.hidden = true;
+            }
+        }
+
+        /* ═══════════ Submit ═══════════ */
+        $('#submitBtn').addEventListener('click', submitOnboarding);
+
+        async function submitOnboarding() {
+            const overlay = $('#progressOverlay');
+            const fill    = $('#progressFill');
+            const pct     = $('#progressPct');
+            const titleEl = $('#progressTitle');
+            const descEl  = $('#progressDesc');
+
+            const fd = new FormData();
+            const lang = LANGUAGES.find(l => l.code === state.language);
+            fd.append('language', lang.label);
+            fd.append('notes', '');
+
+            if (state.recordedVideo) {
+                const ext = state.recordedVideo.mime.includes('mp4') ? 'mp4' : 'webm';
+                fd.append('files', new File(
+                    [state.recordedVideo.blob],
+                    `avatar-recording.${ext}`,
+                    { type: state.recordedVideo.mime },
+                ));
+            }
+            if (state.recordedAudio) {
+                const ext = state.recordedAudio.mime.includes('mp4') ? 'm4a' : 'webm';
+                fd.append('files', new File(
+                    [state.recordedAudio.blob],
+                    `voice-sample.${ext}`,
+                    { type: state.recordedAudio.mime },
+                ));
+            }
+            state.files.forEach(f => fd.append('files', f, f.name));
+            if (state.driveLink.trim()) fd.append('drive_link', state.driveLink.trim());
+
+            overlay.classList.add('is-on');
+            titleEl.textContent = 'Sending your files…';
+            descEl.textContent = 'Please keep this tab open until the upload completes.';
+            fill.style.width = '0%'; pct.textContent = '0%';
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/api/onboarding/${TOKEN}/upload`);
+            xhr.upload.onprogress = e => {
+                if (e.lengthComputable) {
+                    const p = Math.round((e.loaded / e.total) * 100);
+                    fill.style.width = p + '%';
+                    pct.textContent = p + '%';
+                }
+            };
+            xhr.onload = () => {
+                let resp = {};
+                try { resp = JSON.parse(xhr.responseText || '{}'); } catch (_e) {}
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    titleEl.textContent = 'All done! Reloading…';
+                    descEl.textContent = 'Your team has been notified.';
+                    fill.style.width = '100%'; pct.textContent = '100%';
+                    setTimeout(() => location.reload(), 900);
+                } else {
+                    overlay.classList.remove('is-on');
+                    const msg = (resp && (resp.detail || resp.message)) || `Upload failed (${xhr.status}).`;
+                    const alertEl = $('#reviewAlert');
+                    alertEl.hidden = false;
+                    alertEl.className = 'alert alert-danger';
+                    alertEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i><div>${escapeHtml(msg)}</div>`;
+                }
+            };
+            xhr.onerror = () => {
+                overlay.classList.remove('is-on');
+                const alertEl = $('#reviewAlert');
+                alertEl.hidden = false;
+                alertEl.className = 'alert alert-danger';
+                alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i><div>Network error — please check your connection and try again.</div>';
+            };
+            xhr.send(fd);
+        }
+
+        /* ═══════════ Utils ═══════════ */
+        function fmtBytes(n) {
+            if (!n) return '0 B';
+            if (n < 1024) return n + ' B';
+            if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+            if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+            return (n / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+        }
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+            }[c]));
+        }
+
+        /* ═══════════ Boot ═══════════ */
+        // Honor ?via=phone — used when the QR is scanned and the user lands here on mobile.
+        const params = new URLSearchParams(location.search);
+        if (params.get('via') === 'phone' || /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            // Auto-jump to upload pane (mobile cameras handle capture via input).
+            setTimeout(() => {
+                goToStep(2);
+                switchMode('upload');
+            }, 100);
+        }
+    })();
+    </script>
+    {% endif %}
+</body>
+</html>

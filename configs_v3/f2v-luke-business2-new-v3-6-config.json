@@ -1,0 +1,29 @@
+{
+  "experiment_name": "f2v-luke-business2-new-v3-6",
+  "avatarConfig": {
+    "_simulated": true,
+    "params": {
+      "experiment_name": "f2v-luke-business2-new-v3-6",
+      "notes": "",
+      "footage_path": "s3://elai-avatars/common/luke/business2/luke_business_2.mp4",
+      "train_footages_paths": [
+        "s3://elai-avatars/common/luke/business2/luke_business_2.mp4"
+      ],
+      "alpha_footage_path": "s3://elai-avatars/common/luke/business2/luke_business_2_alpha.mp4",
+      "pauses": [
+        0,
+        880,
+        1669
+      ],
+      "face_bbox": null,
+      "avatar_type": "frontal",
+      "normalization_type": "canonical",
+      "model_size": 512,
+      "symmetrical_blinking": true,
+      "instance_type": "ml.g6.2xlarge",
+      "training_duration": 18,
+      "enable_amp": true,
+      "enable_spot_training": false
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "avatarConfig": {
+    "_comment": "Замените на реальный avatarConfig из вашего пайплайна Elai",
+    "model": "f2v-builder-frontal",
+    "version": "v3.6",
+    "resolution": "1080p",
+    "fps": 25,
+    "lipsync": { "engine": "default", "strength": 1.0 },
+    "blinking": { "enabled": true, "frequency": "natural" },
+    "head_motion": { "enabled": true, "amplitude": 0.6 }
+  }
+}
