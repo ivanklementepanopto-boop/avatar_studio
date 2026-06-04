@@ -303,19 +303,19 @@ async def index(request: Request, user: Optional[User] = Depends(get_current_use
     if not user:
         return RedirectResponse(url="/auth", status_code=303)
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "user": user.to_dict()},
-    )
-
+    request=request,
+    name="index.html",
+    context={"user": user.to_dict()},
+)
 
 @app.get("/auth", response_class=HTMLResponse)
 async def auth_page(request: Request, user: Optional[User] = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
-        "auth.html",
-        {"request": request, "oauth": _oauth_enabled()},
-    )
+    "auth.html",
+    {"request": request, "oauth": _oauth_enabled()},
+)
 
 
 # ---- Password login / register -----------------------------------------
@@ -498,17 +498,30 @@ async def auth_reset_page(
     user, err = (None, "not_found")
     if token:
         user, err = peek_password_reset(db, token)
-    return templates.TemplateResponse(
-        "auth.html",
-        {
-            "request": request,
-            "oauth": _oauth_enabled(),
-            "reset_mode": True,
-            "reset_token": token,
-            "reset_user_email": user.email if user else None,
-            "reset_error": err,
-        },
-    )
+   return templates.TemplateResponse(
+                request=request,
+                name="setup.html",
+                context={
+                    "onboarding": None,
+                    "token": token,
+                    "error": "This onboarding link is invalid or has been revoked.",
+                },
+                status_code=404,
+            )
+        return templates.TemplateResponse(
+            request=request,
+            name="setup.html",
+            context={
+                "token": token,
+                "onboarding": onb.to_dict(),
+                "max_file_mb": ONBOARDING_MAX_FILE_MB,
+                "max_files": ONBOARDING_MAX_FILES,
+                "allowed_extensions": sorted(ONBOARDING_ALLOWED_EXT),
+                "drive_status": drive_service.status(),
+                "jira_status": {"configured": JIRA_CONFIGURED, "project": JIRA_PROJECT_KEY},
+                "error": None,
+            },
+        )
 
 
 @app.post("/api/password-reset/confirm")
