@@ -488,6 +488,7 @@ async def password_reset_request(
 
 
 @app.get("/auth/reset", response_class=HTMLResponse)
+@app.get("/auth/reset", response_class=HTMLResponse)
 async def auth_reset_page(
     request: Request,
     token: str = "",
