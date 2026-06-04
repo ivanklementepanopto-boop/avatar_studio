@@ -26,3 +26,5 @@ google-auth-oauthlib>=1.0
 
 # QR generator for the mobile-handoff link on the client setup page.
 qrcode>=8.0
+
+psycopg2-binary>=2.9
