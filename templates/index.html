@@ -28,11 +28,11 @@
         </div>
 
         {# ── Ролевые доступы для кастомизации кабинетов ── #}
-        {% set is_avatar_manager = user.role in ['avatar_manager', 'creator', 'developer', 'superadmin'] %}
-        {% set is_support        = user.role in ['support',  'superadmin'] %}
-        {% set is_manager        = user.role in ['manager',  'superadmin'] %}
-        {% set is_viewer_lvl     = user.role in ['viewer', 'developer', 'avatar_manager', 'creator', 'superadmin'] %}
-
+       {% set is_avatar_manager = user.role in ['avatar_manager', 'creator', 'developer', 'superadmin'] %}
+{% set is_support        = user.role in ['support',  'superadmin'] %}
+{% set is_manager        = user.role in ['manager',  'superadmin'] %}
+{% set is_viewer_lvl     = user.role in ['viewer', 'developer', 'avatar_manager', 'creator', 'superadmin'] %}
+{% set is_creator        = is_avatar_manager %} ```
         {% if is_avatar_manager or is_viewer_lvl %}
         <div class="sidebar-section">
             <div class="sidebar-section-head">
