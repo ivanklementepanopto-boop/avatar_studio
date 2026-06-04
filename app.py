@@ -303,19 +303,20 @@ async def index(request: Request, user: Optional[User] = Depends(get_current_use
     if not user:
         return RedirectResponse(url="/auth", status_code=303)
     return templates.TemplateResponse(
-    request=request,
-    name="index.html",
-    context={"user": user.to_dict()},
-)
+        request=request,
+        name="index.html",
+        context={"user": user.to_dict()},
+    )
 
 @app.get("/auth", response_class=HTMLResponse)
 async def auth_page(request: Request, user: Optional[User] = Depends(get_current_user)):
     if user:
         return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
-    "auth.html",
-    {"request": request, "oauth": _oauth_enabled()},
-)
+        request=request,
+        name="auth.html",
+        context={"oauth": _oauth_enabled()},
+    )
 
 
 # ---- Password login / register -----------------------------------------
@@ -5863,15 +5864,19 @@ async def setup_page(
     onb = get_onboarding_by_token(db, token)
     if not onb:
         return templates.TemplateResponse(
-            "setup.html",
-            {"request": request, "onboarding": None, "token": token,
-             "error": "This onboarding link is invalid or has been revoked."},
+            request=request,
+            name="setup.html",
+            context={
+                "onboarding": None,
+                "token": token,
+                "error": "This onboarding link is invalid or has been revoked.",
+            },
             status_code=404,
         )
     return templates.TemplateResponse(
-        "setup.html",
-        {
-            "request": request,
+        request=request,
+        name="setup.html",
+        context={
             "token": token,
             "onboarding": onb.to_dict(),
             "max_file_mb": ONBOARDING_MAX_FILE_MB,
