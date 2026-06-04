@@ -509,20 +509,6 @@ async def auth_reset_page(
             "reset_error": err,
         },
     )
-        return templates.TemplateResponse(
-            request=request,
-            name="setup.html",
-            context={
-                "token": token,
-                "onboarding": onb.to_dict(),
-                "max_file_mb": ONBOARDING_MAX_FILE_MB,
-                "max_files": ONBOARDING_MAX_FILES,
-                "allowed_extensions": sorted(ONBOARDING_ALLOWED_EXT),
-                "drive_status": drive_service.status(),
-                "jira_status": {"configured": JIRA_CONFIGURED, "project": JIRA_PROJECT_KEY},
-                "error": None,
-            },
-        )
 
 
 @app.post("/api/password-reset/confirm")
