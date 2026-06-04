@@ -563,8 +563,8 @@ async def admin_update_role(
     user: User = Depends(require_role(Role.superadmin)),
     db: Session = Depends(get_session),
 ):
-   """Change a user's role. SuperAdmins cannot demote themselves."""
-    try:  # <-- Теперь 4 пробела, всё ровно
+    """Change a user's role. SuperAdmins cannot demote themselves."""
+    try:
         new_role = Role(body.role)
     except ValueError:
         raise HTTPException(
