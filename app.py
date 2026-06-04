@@ -498,16 +498,17 @@ async def auth_reset_page(
     user, err = (None, "not_found")
     if token:
         user, err = peek_password_reset(db, token)
-   return templates.TemplateResponse(
-                request=request,
-                name="setup.html",
-                context={
-                    "onboarding": None,
-                    "token": token,
-                    "error": "This onboarding link is invalid or has been revoked.",
-                },
-                status_code=404,
-            )
+    return templates.TemplateResponse(
+        request=request,
+        name="auth.html",
+        context={
+            "oauth": _oauth_enabled(),
+            "reset_mode": True,
+            "reset_token": token,
+            "reset_user_email": user.email if user else None,
+            "reset_error": err,
+        },
+    )
         return templates.TemplateResponse(
             request=request,
             name="setup.html",
